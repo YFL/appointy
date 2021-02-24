@@ -1,0 +1,352 @@
+Answer type: int/double
+
+This answer type is used for questions which modify the time or price of the service in the following way:
+    1. the answer holds the modifier values (time or price) and the input from the user scales these;
+    2. these scaled modifier values are added to the values of the service
+
+--------------------------------
+
+NO OPERATORS, THUS THE THING BELOW IS NOT APPLICABLE
+
+If there is no value for an attribute from the {hour, time} attribute set in the Choice_Answers table, then it's
+value should be replaced by 1 or zero depending on the operator being used for that answer
+
+--------------------------------
+
+JSON to Service is not well defined, so no arbitrary services for now
+
+--------------------------------
+
+The Service
+
+Every service has a name, a duration and a price.
+If a service is modular, meaning, that it has some parts
+which are optional, or/and the service has to be configured
+by the customer, then the service comprises several questions
+and answers to the questions. Some of these properties have to
+comply to some rules. For example: a duration consists of 3 
+fields, those are hours, minutes, seconds. Each of these fields
+have to contain an integer type value. Similarly the price of a
+service consists of 2 fields, which are the main price (which means
+dollar for example, or euro, pounds, etc.) and the hundredth of that
+(meaning cents for the euro or the dollar, I don't know any other
+examples).
+Other than that, the questions and answers have they specific fields too.
+
+A tool is planned to be created for defining services with a GUI
+instead of writing the JSON by hand
+
+-------------------------------
+
+WENT ANOTHER WAY BUT LEAVING THIS HERE BECAUSE I MAY CHANGE MY MIND
+Delete the print_* functions and add a to_string member function to every class or struct which may be printed
+
+Consider using an IToString interface.
+
+FIXED
+
+So ultimately I've made all the structs non-aggregates (having constructors and stuff) and added the to_string
+members, but I haven't use a to_string interface (no need rn)
+
+-------------------------------
+
+FIX
+
+Get the id from the Choice_Answers table and add an id field to the Choice class
+Reason:
+    The answer got from the user needs to be identified somehow, so why not make
+    it a single 32 bit integer, the id, instead of the whole option signiture.
+    That's why it is there.
+
+FIXED
+
+-------------------------------
+
+QUESTION
+
+Why is the json parser a separate class? Why aren't the other things too?
+
+FIX
+
+Change that!
+
+NOTE
+
+The parsing methodes could not be robustly added to the AnswerSignature classes:
+The AnswerSignature::parse should return an Answer *, which it can not if it 
+doesn't know about the parse methodes of the classes which extend it.
+Currently there are 2, but that could be subject to change, and than some
+thinkerink would be needed. I don't intend to do that just now as of 11/30/2020
+
+ALAP
+
+-------------------------------
+
+FIX
+
+Answer and all derived classes have changed to *AnswerSignature
+
+Nothing was changed in the files currently named io_util.h and it's pair
+io_util.cc and in the json parser as of 9/18/2020 that is affected by this change.
+Fix that!
+
+PARTIALY FIXED
+
+JSON_Parser on 9/18/2020
+
+FIXED on 9/18/2020
+
+-------------------------------
+
+FIX
+
+The Answer::get_from_json should really be JSON_Parser::parse_answer.
+Fix that!
+
+FIXED
+
+-------------------------------
+
+FIX
+
+Make all the API functions require a db_file argument (well at least those
+which require to fetch some filtered data from the database, or insert
+into it)
+Reason: The lib doesn't have to have a state of the database in memory,
+    because that way the communication becomes more functional (like in
+    functional programming sense). That way the shared lib doesn't have to
+    maintain amy state and can be used to poll whichever db at any moment,
+    so it's basically thread_safe (I guess).
+
+-------------------------------
+
+FIX
+
+Choice renamed to option.
+Needs renaming: jsonparser, io_utils/ops, texts (error, etc.), service_examples
+
+FIXED
+
+-------------------------------
+
+NOTE
+
+The answers will have this format:
+{
+    "question_id": id,
+    "type": type,
+    value/s
+}
+
+-------------------------------
+
+NOTE
+
+The Schedule:
+    the table contains rows of reserved appointments
+    The algorithm:
+        order the rows by date and time
+        create date time pairs which represent the free slots
+        return the free slots which are suitable for the 
+            request
+
+-------------------------------
+
+FIX
+
+Change services_to_json to service_to_json(const Service &service) -> json
+
+FIXED (no service_to_json exists anymore)
+
+-------------------------------
+
+FIX
+
+Separate io utils from conversion utils etc. LINK: QUESTION Why is the json parser a separate...
+ALAP (as late as possible)
+
+-------------------------------
+
+FIX
+
+Lots of give ups everywhere. Make them disappear!
+
+-------------------------------
+
+FIX
+
+Add a default constructor to the structs and do the const_casts where applicable in io_utils.cc
+BUT NOT IN CLIENT CODE! (That would be great to accomplish)
+
+FIXED (it seems)
+
+------------------------------
+
+FIX
+
+The Schedule
+
+WHat if an employer can assign the same time frame to several employees. Some combinations of 
+services could be assigned to the same time frame, because 2 separate employees are assigned
+to them. Several Appointments of the same Service may be assigned to the same time frime
+because the employer's got several employees who she can assign the job to. How to store/retrieve/
+use this information?
+
+FIXED
+
+Nothing to be done. Appointy knows A if the client wants B, let her do the heavy lifting
+
+------------------------------
+
+NOTE
+
+Get the last before, the ones between and the one after the requested time period.
+Then get the holes and check whether they are good for the requested service.
+Return the ones between. 
+
+FIX
+
+Come up with something for the cases where nothing is before or nothing is after
+the requested time period
+
+FIXED
+
+Nothing to be done, it's done.
+
+------------------------------
+
+NOTE
+
+The Date and Time types are not localized. The framework is not prepared for 
+different timezones. The preconception is that the service is not being given
+to customers outside of a country (city/town/...). 
+
+FIXED LINK (FIX Make date and time single-format...)
+
+The date is the date by Christ (you know 2021.1.14.; Gregorian callendar or what).
+The time is the Unix std::time_t and is stored in UTC format. We have wrappers too.
+
+------------------------------
+
+FIX
+
+The service to the request has to be loaded from the db. New "util" functions
+have to be created. Possibly only 2 or 3, because except the Services the other
+types already have those functions. Put them in the io_utils. Don't solve if it's
+not a problem... Luv ya
+
+FIXED (no new functions added) LINK (FIX Remove everything...)
+
+------------------------------
+
+FIX
+
+Create a new type for the appointment offers (f.e. AppointmentOffer).
+
+FIXED (Gap)
+
+------------------------------
+
+FIX
+
+Remove everything from the io_utils and move them inside their classes.
+No questions. Do it. It's nicer, tidier, more straighforward, etc.
+
+FIXED
+
+-----------------------------
+
+FIX
+
+Add a .h file with a map<int, int> meaning pair::first = number
+of the month pair::second = number of the days in that month
+Treat February based on whether the year is a leap year.
+
+Add a days_in_year method to Date which gives the count
+of the days (january 1st means 1 day) in the year of that date.
+
+NOTE
+
+I don't think a map is the best tool. A function of an int argument
+is more like what I want. (mainly bc leap years and february)
+Another argument could be a bool like is_leap or something similar.
+
+FIXED
+
+-----------------------------
+
+FIX
+
+Make date and time single-format (no hh:mm::ss OR <time> but only hh:mm:ss).
+
+OPTIONS:
+    time zones/standards (UTC, GMT, ...) and international time
+    no time zones/standards and local time only
+
+FIXED
+
+c standard time_t and tm are used. And Time and Date are c++ wrappers around them.
+
+-----------------------------
+
+FIX
+
+Add to_gmt and to_local stuff to Date and Time or only Time.
+
+ALAP
+
+-----------------------------
+
+FIX
+
+Consider some leap second containing implemetation (boost, qt, whatever) for the date and time
+
+ALAP
+
+-----------------------------
+
+FIX
+
+The service has to be broken down similarly to how it was in the sqlite db. 
+Difference: the answer signatures won't have to be separated into choice and value BUT
+each of the choices has to have some id. 
+
+FIXED
+
+-----------------------------
+
+FIX
+
+Services are inserted to the database without any transaction or unique constrainst. Fix that!
+
+PARTIALY FIXED
+
+Unique now added to the Services collection via a function set_up_services_collection
+For now there is no place where transaction should be used. Operations on single documents
+are atomic in mongo.
+
+FIXED 
+
+Added transaction around the insert_many in store_services in io_ops.
+
+-----------------------------
+
+FIX
+
+There are no checks for unexpected request, services, ...
+Almost every piece of data comes from the client. The checks
+have to be done.
+
+ASAP
+
+-----------------------------
+
+FIX
+
+The appointments are not bound to any user or whatsoever.
+Add at least a user provided string as identification of the 
+appointments owner.
+
+ASAP
+
+-----------------------------

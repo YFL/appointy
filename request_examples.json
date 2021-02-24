@@ -1,0 +1,51 @@
+{
+    "first_date":
+    {
+        "year": 2020,
+        "month": 8,
+        "day": 19
+    },
+    "last_date":
+    {
+        "year": 2020,
+        "month": 8,
+        "day": 19
+    },
+    "interval_start":
+    {
+        "hours": 8,
+        "minutes": 0,
+        "seconds": 0
+    },
+    "interval_end":
+    {
+        "hours": 20,
+        "minutes": 0,
+        "seconds": 0
+    },
+    "service_id": "60006236fc2d0d0ef92582c7",
+    "answers":
+    [
+        {
+            "answer_signature_id": "600062e018950114de294953",
+            "type": "choice",
+            "choices":
+            [
+                2
+            ]
+        },
+        {
+            "answer_signature_id": "600062e018950114de294954",
+            "type": "int",
+            "number": 1
+        },
+        {
+            "answer_signature_id": "600062e018950114de294955",
+            "type": "choice",
+            "choices":
+            [
+                3, 4
+            ]
+        }
+    ]
+}

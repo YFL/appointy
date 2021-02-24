@@ -1,0 +1,154 @@
+[
+    {
+        "name": "service1",
+        "price":
+        {
+            "main": 50,
+            "hundredth": 0
+        },
+        "duration":
+        {
+            "hours": 1,
+            "minutes": 20,
+            "seconds": 0
+        },
+        "questions":
+        [
+            {
+                "text": "question1",
+                "answer_signature":
+                {
+                    "type": "single",
+                    "options":
+                    [
+                        {
+                            "text": "answer1",
+                            "price":
+                            {
+                                "main": 1,
+                                "hundredth": 50
+                            },
+                            "duration":
+                            {
+                                "hours": 0,
+                                "minutes": 10,
+                                "seconds": 0
+                            }
+                        },
+                        {
+                            "text": "answer2",
+                            "price":
+                            {
+                                "main": 0,
+                                "hundredth": 20
+                            },
+                            "duration":
+                            {
+                                "hours": 1,
+                                "minutes": 0,
+                                "seconds": 0
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "text": "question2",
+                "answer_signature":
+                {
+                    "type": "int",
+                    "min": 0,
+                    "max": 2,
+                    "default": 0,
+                    "price":
+                    {
+                        "main": 1,
+                        "hundredth": 0
+                    },
+                    "duration":
+                    {
+                        "hours": 0,
+                        "minutes": 0,
+                        "seconds": 30
+                    }
+                }
+            },
+            {
+                "text": "question3",
+                "answer_signature":
+                {
+                    "type": "many",
+                    "options":
+                    [
+                        {
+                            "text": "option1",
+                            "price":
+                            {
+                                "main": 0,
+                                "hundredth": 35
+                            },
+                            "duration":
+                            {
+                                "hours": 0,
+                                "minutes": 20,
+                                "seconds": 0
+                            }
+                        },
+                        {
+                            "text": "option2",
+                            "price":
+                            {
+                                "main": 10,
+                                "hundredth": 45
+                            },
+                            "duration":
+                            {
+                                "hours": 2,
+                                "minutes": 30,
+                                "seconds": 0
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    {
+        "name": "service2",
+        "price":
+        {
+            "main": 1,
+            "hundredth": 0
+        },
+        "duration":
+        {
+            "hours": 0,
+            "minutes": 10,
+            "seconds": 0
+        },
+        "questions":
+        [
+            {
+                "text": "question4",
+                "answer_signature":
+                {
+                    "type": "double",
+                    "min": 0,
+                    "max": 5,
+                    "default": 1,
+                    "price":
+                    {
+                        "main": 10,
+                        "hundredth": 0
+                    },
+                    "duration":
+                    {
+                        "hours": 0,
+                        "minutes": 1,
+                        "seconds": 0
+                    }
+                }
+            }
+        ]
+    }
+]

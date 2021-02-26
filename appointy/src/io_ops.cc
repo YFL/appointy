@@ -88,26 +88,17 @@ auto store_services(const std::string &services, const std::string &connection_s
         documents.push_back(util::service_to_bson(service));
     }
 
-    auto client_session = client.start_session();
-
-    client_session.start_transaction();
-
-    auto result = services_coll.insert_many(client_session, documents.begin(), documents.end());
+    auto result = services_coll.insert_many(documents.begin(), documents.end());
 
     if(result.has_value())
     {
         if(result.value().inserted_count() != size)
         {
-            client_session.abort_transaction();
-
             return false;
         }
-        client_session.commit_transaction();
 
         return true;
     }
-
-    client_session.abort_transaction();
 
     return false;
 }

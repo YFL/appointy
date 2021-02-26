@@ -12,7 +12,7 @@ auto main() -> int
 
     mongocxx::instance instance;
 
-    auto services = load_services_from_json("./services_examples.json");
+    auto services = load_services_from_json("./services_examples_test.json");
 
     set_up_services_collection("mongodb://localhost", "appointy_db");
 

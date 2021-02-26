@@ -9,7 +9,7 @@ namespace appointy
 
 using json = nlohmann::json;
 
-Time::Time(const std::time_t time) :
+Time::Time(const std::time_t time) noexcept :
     _time {time}
 {
 
@@ -18,6 +18,18 @@ Time::Time(const std::time_t time) :
 Time::Time(int hours, int minutes, int seconds) :
     _time {}
 {
+    if(hours < 0)
+    {
+        throw Exception {"Hours must be at least 0"};
+    }
+    if(minutes < 0 || minutes > 59)
+    {
+        throw Exception {"Minutes must be from the interval <0, 59>"};
+    }
+    if(seconds < 0 || seconds > 59)
+    {
+        throw Exception {"Seconds must be from the interval <0, 59>"};
+    }
     std::tm time;
     std::memset(&time, 0, sizeof(std::tm));
     time.tm_hour = hours;

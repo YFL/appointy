@@ -11,7 +11,7 @@ namespace appointy
 struct Time
 {
 public:
-    Time(const std::time_t time);
+    Time(const std::time_t time) noexcept;
     Time(int hours, int minutes, int seconds);
 
 public:

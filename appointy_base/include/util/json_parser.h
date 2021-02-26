@@ -33,7 +33,16 @@ public:
     {
         std::optional<T> min, max, def;
         min = max = def = std::nullopt;
-
+        std::string id;
+        try
+        {
+            id = answer_signature.at("id");
+        }
+        catch(const nlohmann::detail::out_of_range &)
+        {
+            id = "0";
+        }
+        
         try
         {
             min = answer_signature.at("min");
@@ -67,7 +76,7 @@ public:
 
             try
             {
-                return new NumericAnswerSignature<T>("0", min, max, def, d, parse_price(answer_signature.at("price")));
+                return new NumericAnswerSignature<T>(id, min, max, def, d, parse_price(answer_signature.at("price")));
             }
             catch(const nlohmann::detail::out_of_range &)
             {

@@ -1,4 +1,5 @@
 #include <appointy_date.h>
+#include <appointy_exception.h>
 
 namespace appointy
 {
@@ -25,7 +26,7 @@ auto days_in_month = [](int index, bool is_leap) -> int
     return days_in_months[index];
 };
 
-Date::Date(const std::time_t date) :
+Date::Date(const std::time_t date) noexcept :
     _date {date}
 {
 
@@ -34,6 +35,18 @@ Date::Date(const std::time_t date) :
 Date::Date(int year, int month, int day) :
     _date {}
 {
+    if(year < 1900)
+    {
+        throw Exception {"Year must be at least 1900"};
+    }
+    if(month < 1 || month > 12)
+    {
+        throw Exception {"Month must be from interval <1, 12>"};
+    }
+    if(day > days_in_month(month, !(year % 4)) || day < 1)
+    {
+        throw Exception {"The day doesn't correspond to the number of days in the given month"};
+    }
     std::tm date;
     std::memset(&date, 0, sizeof(std::tm));
     date.tm_year = year - 1900;
@@ -97,32 +110,32 @@ auto Date::operator++(int days) const -> Date
     return *this + 1;
 }
 
-auto Date::year() const -> int
+auto Date::year() const noexcept -> int
 {
     return std::localtime(&_date)->tm_year + 1900;
 }
 
-auto Date::month() const -> int
+auto Date::month() const noexcept -> int
 {
     return std::localtime(&_date)->tm_mon + 1;
 }
 
-auto Date::day() const -> int
+auto Date::day() const noexcept -> int
 {
     return std::localtime(&_date)->tm_mday;
 }
 
-auto Date::date() const -> std::time_t
+auto Date::date() const noexcept -> std::time_t
 {
     return _date;
 }
 
-auto Date::is_leap() const -> bool
+auto Date::is_leap() const noexcept -> bool
 {
     return !(year() % 4);
 }
 
-auto Date::days_in_year() const -> int
+auto Date::days_in_year() const noexcept -> int
 {
     int days = 0;
     for(int i = 1; i < month(); i++)
@@ -133,7 +146,7 @@ auto Date::days_in_year() const -> int
     return days + day();
 }
 
-auto Date::to_string() const -> std::string
+auto Date::to_string() const noexcept -> std::string
 {
     std::string ret {std::to_string(this->year()) + "."};
     ret += ::std::to_string(this->month()) + ".";
@@ -142,7 +155,7 @@ auto Date::to_string() const -> std::string
     return ret;
 }
 
-auto Date::to_json() const -> json
+auto Date::to_json() const noexcept -> json
 {
     json j = _date;
 

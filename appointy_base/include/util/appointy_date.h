@@ -12,7 +12,7 @@ namespace appointy
 struct Date
 {
 public:
-    Date(const std::time_t date);
+    Date(const std::time_t date) noexcept;
     Date(int year, int month, int day);
 
 public:
@@ -26,22 +26,22 @@ public:
     auto operator++(int days) const -> Date;
 
 public:
-    auto year() const -> int;
-    auto month() const -> int;
-    auto day() const -> int;
+    auto year() const noexcept -> int;
+    auto month() const noexcept -> int;
+    auto day() const noexcept -> int;
 
 public:
-    auto date() const -> std::time_t;
+    auto date() const noexcept -> std::time_t;
 
 public:
-    auto is_leap() const -> bool;
+    auto is_leap() const noexcept -> bool;
 
 public:
-    auto days_in_year() const -> int;
+    auto days_in_year() const noexcept -> int;
 
 public:
-    auto to_string() const -> std::string;
-    auto to_json() const -> nlohmann::json;
+    auto to_string() const noexcept -> std::string;
+    auto to_json() const noexcept -> nlohmann::json;
 
 public:
     const std::time_t _date;

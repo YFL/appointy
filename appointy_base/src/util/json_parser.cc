@@ -128,6 +128,16 @@ auto JSON_Parser::parse_answer_signature(const json &answer_signature) -> Answer
 
 auto JSON_Parser::parse_choice_answer_signature(const json &answer_signature) -> ChoiceAnswerSignature *
 {
+    std::string id;
+    try
+    {
+        id = answer_signature.at("id");
+    }
+    catch(const nlohmann::detail::out_of_range &)
+    {
+        id = "0";
+    }
+    
     std::string type_string;
     try
     {
@@ -159,38 +169,45 @@ auto JSON_Parser::parse_choice_answer_signature(const json &answer_signature) ->
         throw Exception("No options in answer_signature\n" + answer_signature.dump());
     }
 
-    return new ChoiceAnswerSignature("0", type, options);
+    return new ChoiceAnswerSignature(id, type, options);
 }
 
 auto JSON_Parser::parse_option(const json &option) -> Option
 {
-    std::string text;
     try
     {
-        text = option.at("text");
+        uint32_t id = option.at("id");
+        std::string text;
+        try
+        {
+            text = option.at("text");
+        }
+        catch(const nlohmann::detail::out_of_range &)
+        {
+            throw Exception("No text in option\n" + option.dump());
+        }
+
+        try
+        {
+            auto p = JSON_Parser::parse_price(option["price"]);
+
+            try
+            {
+                return Option {id, text, p, JSON_Parser::parse_time(option["duration"])};
+            }
+            catch(const nlohmann::detail::out_of_range&)
+            {
+                throw Exception("No duration in option\n" + option.dump());
+            }
+        }
+        catch(const nlohmann::detail::out_of_range &)
+        {
+            throw Exception("No price in option\n" + option.dump());
+        }
     }
     catch(const nlohmann::detail::out_of_range &)
     {
-        throw Exception("No text in option\n" + option.dump());
-    }
-
-    std::unique_ptr<Price> p;
-    try
-    {
-        p = std::unique_ptr<Price>(new Price {JSON_Parser::parse_price(option["price"])});
-    }
-    catch(const nlohmann::detail::out_of_range &)
-    {
-        throw Exception("No price in option\n" + option.dump());
-    }
-
-    try
-    {
-        return Option {0u, text, *p, JSON_Parser::parse_time(option["duration"])};
-    }
-    catch(const nlohmann::detail::out_of_range&)
-    {
-        throw Exception("No duration in option\n" + option.dump());
+        throw Exception {"No id in option\n" + option.dump()};
     }
 }
 

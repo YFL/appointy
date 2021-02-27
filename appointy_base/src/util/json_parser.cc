@@ -11,7 +11,7 @@ auto JSON_Parser::parse_service(const json &service) -> Service
     std::string id {"0"};
     try
     {
-        id = service.at("id");
+        id = service.at("_id").at("$oid");
     }
     catch(const nlohmann::detail::out_of_range &)
     {
@@ -131,7 +131,7 @@ auto JSON_Parser::parse_choice_answer_signature(const json &answer_signature) ->
     std::string id;
     try
     {
-        id = answer_signature.at("id");
+        id = answer_signature.at("_id").at("$oid");
     }
     catch(const nlohmann::detail::out_of_range &)
     {

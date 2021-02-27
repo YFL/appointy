@@ -36,7 +36,7 @@ public:
         std::string id;
         try
         {
-            id = answer_signature.at("id");
+            id = answer_signature.at("_id").at("$oid");
         }
         catch(const nlohmann::detail::out_of_range &)
         {

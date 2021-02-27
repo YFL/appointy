@@ -329,6 +329,15 @@ FIXED
 
 Added transaction around the insert_many in store_services in io_ops.
 
+UNFIXED
+
+The mongodb transactions can only be used on shards or on replica sets.
+I didn't wanna mess with the mongo db config so far (could have set up a
+one elmeent replica set), so I've just removed the transaction code.
+Dunno git log hash but somwhere at the beginning of the current repos dev
+branch's history, because it happened after the directory structure and
+library structure switch.
+
 -----------------------------
 
 FIX
@@ -338,6 +347,13 @@ Almost every piece of data comes from the client. The checks
 have to be done.
 
 ASAP
+
+NOTE
+
+I'm not sure they are fixed, but last time I've checked some of the
+functions and classes, they seemed allright. (Dont trust me on this tho)
+
+Absolutely have to check it sometime.
 
 -----------------------------
 

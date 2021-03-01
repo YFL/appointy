@@ -21,7 +21,7 @@ auto main() -> int
     auto services_loaded = load_services("mongodb://localhost", "appointy_db");
     for(auto &s : services_loaded)
     {
-        std::cout << s << std::endl;
+        std::cout << s.to_json().dump() << std::endl;
     }
 
     auto appointment_request = open_file_to_string("./appointment_request_test.json");

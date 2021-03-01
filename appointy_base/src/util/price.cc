@@ -47,6 +47,16 @@ auto Price::operator-(const Price &other) const -> Price
     return Price {_unit, _hundredth};
 }
 
+auto Price::operator==(const Price &rhs) const noexcept -> bool
+{
+    return unit == rhs.unit && hundredth == rhs.hundredth;
+}
+
+auto Price::operator!=(const Price &rhs) const noexcept -> bool
+{
+    return !(*this == rhs);
+}
+
 auto Price::to_string() const -> std::string
 {
     std::string ret {std::to_string(this->unit) + "."};

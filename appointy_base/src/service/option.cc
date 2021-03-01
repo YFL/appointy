@@ -16,6 +16,16 @@ Option::Option(uint32_t id, const std::string &text, const Price &p, const Time 
 
 }
 
+auto Option::operator==(const Option &rhs) const noexcept -> bool
+{
+    return id == rhs.id && text == rhs.text && price == rhs.price && duration == rhs.duration;
+}
+
+auto Option::operator!=(const Option &rhs) const noexcept -> bool
+{
+    return !(*this == rhs);
+}
+
 auto Option::to_string() const -> std::string
 {
     std::string ret {std::to_string(this->id) + "\n"};

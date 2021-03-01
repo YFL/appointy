@@ -24,6 +24,10 @@ public:
     NumericAnswerSignature(const std::string &id, const std::optional<NumericType> &min, const std::optional<NumericType> &max, const std::optional<NumericType> &default_value, const Time &duration, const Price &price);
 
 public:
+    auto operator==(const AnswerSignature &rhs) const noexcept -> bool override;
+    auto operator!=(const AnswerSignature &rhs) const noexcept -> bool override;
+
+public:
     virtual auto to_string() const -> std::string override
     {
         std::string ret {this->id + "\n" + (std::string)this->type + "\n"};

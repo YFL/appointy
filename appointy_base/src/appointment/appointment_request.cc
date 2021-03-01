@@ -7,7 +7,7 @@ namespace appointy
 
 using json = nlohmann::json;
 
-AppointmentRequest::AppointmentRequest(const Date &first, const Date &last, const Time &from, const Time &until, const std::string  &service_id, const std::vector<std::shared_ptr<Answer>> &answers) :
+AppointmentRequest::AppointmentRequest(const Date &first, const Date &last, const Time &from, const Time &until, const std::string &service_id, const std::vector<std::shared_ptr<Answer>> &answers) :
     first_date {first},
     last_date {last},
     interval_start {from},

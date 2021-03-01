@@ -48,6 +48,10 @@ public:
     explicit ChoiceAnswerSignature(const std::string &id, ChoiceType choice_type, const std::vector<Option> &options);
 
 public:
+    virtual auto operator==(const AnswerSignature &rhs) const noexcept -> bool override;
+    virtual auto operator!=(const AnswerSignature &rhs) const noexcept -> bool override;
+
+public:
     virtual auto to_string() const -> std::string override;
     virtual auto to_json() const -> nlohmann::json override;
 };

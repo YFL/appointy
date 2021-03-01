@@ -27,4 +27,32 @@ NumericAnswerSignature<double>::NumericAnswerSignature(const std::string &id, co
 
 }
 
+template<>
+auto NumericAnswerSignature<int>::operator==(const AnswerSignature &rhs) const noexcept -> bool
+{
+    auto *nas = dynamic_cast<const NumericAnswerSignature<int> *>(&rhs);
+
+    return nas && id == nas->id && type == nas->type && min == nas->min && max == nas->max && default_value == nas->default_value && price == nas->price && duration == nas->duration;
+}
+
+template<>
+auto NumericAnswerSignature<double>::operator==(const AnswerSignature &rhs) const noexcept -> bool
+{
+    auto *nas = dynamic_cast<const NumericAnswerSignature<double> *>(&rhs);
+
+    return nas && id == nas->id && type == nas->type && min == nas->min && max == nas->max && default_value == nas->default_value && price == nas->price && duration == nas->duration;
+}
+
+template<>
+auto NumericAnswerSignature<int>::operator!=(const AnswerSignature &rhs) const noexcept -> bool
+{
+    return !(*this == rhs);
+}
+
+template<>
+auto NumericAnswerSignature<double>::operator!=(const AnswerSignature &rhs) const noexcept -> bool
+{
+    return !(*this == rhs);
+}
+
 } // namespace appointy

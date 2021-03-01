@@ -1,6 +1,6 @@
 #include <io_ops.h>
 
-#include <iostream>
+#include <algorithm>
 #include <fstream>
 #include <sstream>
 
@@ -37,9 +37,30 @@ auto open_file_to_string(const std::string &sfp) -> std::string
     return ss.str();
 }
 
-auto load_services_from_json(const std::string &ptj) -> std::string
+auto load_services_from_json(const std::string &ptj) -> std::vector<Service>
 {
-    return open_file_to_string(ptj);
+    try
+    {
+        auto json = nlohmann::json::parse(open_file_to_string(ptj), nullptr, true, true);
+        auto services = std::vector<Service> {};
+
+        if(!json.is_array())
+        {
+            throw Exception {"The root object is not an array. Even if there's only one service, it has to be added to an array"};
+        }
+        services.reserve(json.size());
+
+        for(auto &json_service : json)
+        {
+            services.push_back(JSON_Parser::parse_service(json_service));
+        }
+
+        return services;
+    }
+    catch(const nlohmann::detail::parse_error &e)
+    {
+        throw Exception {"Couldn't parse the services from the file: " + ptj};
+    }
 }
 
 auto set_up_services_collection(const std::string &connection_string, const std::string &db_name) -> void
@@ -56,34 +77,15 @@ auto set_up_services_collection(const std::string &connection_string, const std:
     services.create_index(bsoncxx::document::view_or_value {keys}, bsoncxx::document::view_or_value {options});
 }
 
-auto store_services(const std::string &services, const std::string &connection_string, const std::string &db_name) -> bool
+auto store_services(const std::vector<Service> &services, const std::string &connection_string, const std::string &db_name) -> bool
 {
-    using json = nlohmann::json;
-
-    json j;
-    try
-    {
-        j = json::parse(services, nullptr, true, true);
-    }
-    catch(const json::parse_error &e)
-    {
-        throw Exception {"Couldn't parse services:\n" + services + "\nWith error: " + e.what()};
-    }
-
-    auto size = j.size();
-    std::vector<Service> in_mem_services;
-    for(auto &service_json : j)
-    {
-        in_mem_services.push_back(JSON_Parser::parse_service(service_json));
-    }
-
     mongocxx::uri uri {connection_string};
     mongocxx::client client {uri};
     mongocxx::database db {client[db_name]};
     mongocxx::collection services_coll {db["Services"]};
 
     std::vector<bsoncxx::document::view_or_value> documents;
-    for(auto &service : in_mem_services)
+    for(auto &service : services)
     {
         documents.push_back(util::service_to_bson(service));
     }
@@ -92,7 +94,7 @@ auto store_services(const std::string &services, const std::string &connection_s
 
     if(result.has_value())
     {
-        if(result.value().inserted_count() != size)
+        if(result.value().inserted_count() != services.size())
         {
             return false;
         }
@@ -103,9 +105,9 @@ auto store_services(const std::string &services, const std::string &connection_s
     return false;
 }
 
-auto load_services(const std::string &connection_string, const std::string &db_name) -> std::vector<std::string>
+auto load_services(const std::string &connection_string, const std::string &db_name) -> std::vector<Service>
 {
-    std::vector<std::string> services;
+    std::vector<Service> services;
 
     mongocxx::uri uri {connection_string};
     mongocxx::client client {uri};
@@ -115,7 +117,7 @@ auto load_services(const std::string &connection_string, const std::string &db_n
 
     for(auto doc : cursor)
     {
-        services.push_back(bsoncxx::to_json(doc));
+        services.push_back(JSON_Parser::parse_service(nlohmann::json::parse(bsoncxx::to_json(doc), nullptr, true, true)));
     }
 
     return services;

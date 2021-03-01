@@ -12,6 +12,18 @@ ChoiceAnswerSignature::ChoiceAnswerSignature(const std::string &id, ChoiceType t
 
 }
 
+auto ChoiceAnswerSignature::operator==(const AnswerSignature &rhs) const noexcept -> bool
+{
+    auto *cas = dynamic_cast<const ChoiceAnswerSignature *>(&rhs);
+    
+    return cas && id == cas->id && type == cas->type && options == cas->options;
+}
+
+auto ChoiceAnswerSignature::operator!=(const AnswerSignature &rhs) const noexcept -> bool
+{
+    return !(*this == rhs);
+}
+
 auto ChoiceAnswerSignature::to_string() const -> std::string
 {
     std::string ret {this->id + "\n"};

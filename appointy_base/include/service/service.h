@@ -26,6 +26,10 @@ public:
     Service(const std::string &id, const std::string &name, const Price &price, const Time &duration, const std::vector<Question> &questions);
 
 public:
+    auto operator== (const Service &rhs) const noexcept -> bool;
+    auto operator!= (const Service &rhs) const noexcept -> bool;
+
+public:
     auto to_string() const -> std::string;
     auto to_json() const -> nlohmann::json;
 };

@@ -53,6 +53,10 @@ public:
 public:
     virtual ~AnswerSignature() = default;
 
+public:
+    virtual auto operator==(const AnswerSignature &rhs) const noexcept -> bool = 0;
+    virtual auto operator!=(const AnswerSignature &rhs) const noexcept -> bool = 0;
+
 protected:
     AnswerSignature(const std::string &id, AnswerSignatureType type);
 

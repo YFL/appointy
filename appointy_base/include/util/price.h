@@ -22,6 +22,8 @@ public:
 public:
     auto operator+(const Price &other) const -> Price;
     auto operator-(const Price &other) const -> Price;
+    auto operator==(const Price &rhs) const noexcept -> bool;
+    auto operator!=(const Price &rhs) const noexcept -> bool;
 
 public:
     auto to_string() const -> std::string;

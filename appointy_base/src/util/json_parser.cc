@@ -6,16 +6,25 @@
 namespace appointy
 {
 
-auto JSON_Parser::parse_service(const json &service) -> Service
+auto JSON_Parser::parse_service(const nlohmann::json &service) -> Service
 {
-    std::string id {"0"};
+    auto id = std::string {};
     try
     {
-        id = service.at("_id").at("$oid");
+        auto id_json = service.at("_id");
+        if(id_json.is_object())
+        {
+            id = id_json.at("$oid");
+        }
+        else
+        {
+            id = id_json;
+        }
+        
     }
     catch(const nlohmann::detail::out_of_range &)
     {
-        
+        // intentionally left blank
     }
     
     std::string name;
@@ -76,7 +85,7 @@ auto JSON_Parser::parse_service(const json &service) -> Service
     }
 }
 
-auto JSON_Parser::parse_question(const json &question) -> Question
+auto JSON_Parser::parse_question(const nlohmann::json &question) -> Question
 {
     std::string text;
     try
@@ -98,7 +107,7 @@ auto JSON_Parser::parse_question(const json &question) -> Question
     }
 }
 
-auto JSON_Parser::parse_answer_signature(const json &answer_signature) -> AnswerSignature *
+auto JSON_Parser::parse_answer_signature(const nlohmann::json &answer_signature) -> AnswerSignature *
 {
     try
     {
@@ -126,16 +135,25 @@ auto JSON_Parser::parse_answer_signature(const json &answer_signature) -> Answer
     }
 }
 
-auto JSON_Parser::parse_choice_answer_signature(const json &answer_signature) -> ChoiceAnswerSignature *
+auto JSON_Parser::parse_choice_answer_signature(const nlohmann::json &answer_signature) -> ChoiceAnswerSignature *
 {
-    std::string id;
+    auto id = std::string {};
     try
     {
-        id = answer_signature.at("_id").at("$oid");
+        auto id_json = answer_signature.at("_id");
+        if(id_json.is_object())
+        {
+            id = id_json.at("$oid");
+        }
+        else
+        {
+            id = id_json;
+        }
+        
     }
     catch(const nlohmann::detail::out_of_range &)
     {
-        id = "0";
+        // intentionally left blank
     }
     
     std::string type_string;
@@ -172,7 +190,7 @@ auto JSON_Parser::parse_choice_answer_signature(const json &answer_signature) ->
     return new ChoiceAnswerSignature(id, type, options);
 }
 
-auto JSON_Parser::parse_option(const json &option) -> Option
+auto JSON_Parser::parse_option(const nlohmann::json &option) -> Option
 {
     try
     {
@@ -211,7 +229,7 @@ auto JSON_Parser::parse_option(const json &option) -> Option
     }
 }
 
-auto JSON_Parser::parse_date(const json &date) -> Date
+auto JSON_Parser::parse_date(const nlohmann::json &date) -> Date
 {
     if(date.is_number_integer())
     {
@@ -244,7 +262,7 @@ auto JSON_Parser::parse_date(const json &date) -> Date
     }
 }
 
-auto JSON_Parser::parse_time(const json &time) -> Time
+auto JSON_Parser::parse_time(const nlohmann::json &time) -> Time
 {
     int hours, mins;
     if(time.is_number_integer())
@@ -277,7 +295,7 @@ auto JSON_Parser::parse_time(const json &time) -> Time
     }
 }
 
-auto JSON_Parser::parse_price(const json &price) -> Price
+auto JSON_Parser::parse_price(const nlohmann::json &price) -> Price
 {
     int main, hundredth;
     try
@@ -298,7 +316,7 @@ auto JSON_Parser::parse_price(const json &price) -> Price
     }
 }
 
-auto JSON_Parser::parse_answer(const json &answer) -> Answer *
+auto JSON_Parser::parse_answer(const nlohmann::json &answer) -> Answer *
 {
     std::string type;
     try
@@ -360,7 +378,7 @@ auto JSON_Parser::parse_answer(const json &answer) -> Answer *
     throw Exception("Invalid type in answer: " + answer.dump());
 }
 
-auto JSON_Parser::parse_choices(const json &choices) -> std::vector<uint32_t>
+auto JSON_Parser::parse_choices(const nlohmann::json &choices) -> std::vector<uint32_t>
 {
     std::vector<uint32_t> ret;
     for(auto &c : choices)
@@ -371,7 +389,7 @@ auto JSON_Parser::parse_choices(const json &choices) -> std::vector<uint32_t>
     return ret;
 }
 
-auto JSON_Parser::parse_appointment_request(const json &request) -> AppointmentRequest
+auto JSON_Parser::parse_appointment_request(const nlohmann::json &request) -> AppointmentRequest
 {
     try
     {
@@ -434,7 +452,7 @@ auto JSON_Parser::parse_appointment_request(const json &request) -> AppointmentR
     }
 }
 
-auto JSON_Parser::parse_appointment(const json &appointment) -> Appointment
+auto JSON_Parser::parse_appointment(const nlohmann::json &appointment) -> Appointment
 {
     std::string id {"0"};
     try

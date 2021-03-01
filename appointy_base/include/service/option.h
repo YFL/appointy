@@ -21,6 +21,10 @@ public:
     Option(uint32_t id, const std::string &text, const Price &price, const Time &duration);
 
 public:
+    auto operator==(const Option &rhs) const noexcept -> bool;
+    auto operator!=(const Option &rhs) const noexcept -> bool;
+
+public:
     auto to_string() const -> std::string;
     auto to_json() const -> nlohmann::json;
 };

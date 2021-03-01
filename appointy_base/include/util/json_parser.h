@@ -19,28 +19,35 @@
 namespace appointy
 {
 
-using json = nlohmann::json;
-
 class JSON_Parser
 {
 public:
-    static auto parse_service(const json &service) -> Service;
-    static auto parse_question(const json &question) -> Question;
-    static auto parse_answer_signature(const json &answer_signature) -> AnswerSignature *;
-    static auto parse_choice_answer_signature(const json &answer_signature) -> ChoiceAnswerSignature *;
+    static auto parse_service(const nlohmann::json &service) -> Service;
+    static auto parse_question(const nlohmann::json &question) -> Question;
+    static auto parse_answer_signature(const nlohmann::json &answer_signature) -> AnswerSignature *;
+    static auto parse_choice_answer_signature(const nlohmann::json &answer_signature) -> ChoiceAnswerSignature *;
     template <typename T>
-    static auto parse_numeric_answer_signature(const json &answer_signature) -> NumericAnswerSignature<T> *
+    static auto parse_numeric_answer_signature(const nlohmann::json &answer_signature) -> NumericAnswerSignature<T> *
     {
         std::optional<T> min, max, def;
         min = max = def = std::nullopt;
-        std::string id;
+        auto id = std::string {};
         try
         {
-            id = answer_signature.at("_id").at("$oid");
+            auto id_json = answer_signature.at("_id");
+            if(id_json.is_object())
+            {
+                id = id_json.at("$oid");
+            }
+            else
+            {
+                id = id_json;
+            }
+            
         }
         catch(const nlohmann::detail::out_of_range &)
         {
-            id = "0";
+            // Intentionally left blank
         }
         
         try
@@ -88,16 +95,16 @@ public:
             throw Exception("No duration in answer_signature\n" + answer_signature.dump());
         }
     }
-    static auto parse_option(const json &option) -> Option;
-    static auto parse_date(const json &date) -> Date;
-    static auto parse_time(const json &time) -> Time;
-    static auto parse_price(const json &price) -> Price;
+    static auto parse_option(const nlohmann::json &option) -> Option;
+    static auto parse_date(const nlohmann::json &date) -> Date;
+    static auto parse_time(const nlohmann::json &time) -> Time;
+    static auto parse_price(const nlohmann::json &price) -> Price;
 
 public:
-    static auto parse_answer(const json &answer) -> Answer *;
-    static auto parse_choices(const json &choices) -> std::vector<uint32_t>;
-    static auto parse_appointment_request(const json &request) -> AppointmentRequest;
-    static auto parse_appointment(const json &appointment) -> Appointment;
+    static auto parse_answer(const nlohmann::json &answer) -> Answer *;
+    static auto parse_choices(const nlohmann::json &choices) -> std::vector<uint32_t>;
+    static auto parse_appointment_request(const nlohmann::json &request) -> AppointmentRequest;
+    static auto parse_appointment(const nlohmann::json &appointment) -> Appointment;
 };
 
 } // namespace appointy

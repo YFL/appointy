@@ -215,7 +215,7 @@ auto book_appointment(const std::string &a, const std::string &db_connection_str
 
     mongocxx::collection collection {client[db_name]["Appointments"]};
 
-    auto appointment = Appointment {JSON_Parser::parse_appointment(json::parse(a))};
+    auto appointment = Appointment {JSON_Parser::parse_appointment(nlohmann::json::parse(a))};
 
     auto appointment_offers = accept_appointment_request(appointment.request.to_json(), db_connection_string, db_name);
 

@@ -21,6 +21,16 @@ Service::Service(const std::string &id, const std::string &name, const Price &pr
 
 }
 
+auto Service::operator== (const Service &rhs) const noexcept -> bool
+{
+    return id == rhs.id && name == rhs.name && price == rhs.price && duration == rhs.duration && questions == rhs.questions;
+}
+
+auto Service::operator!= (const Service &rhs) const noexcept -> bool
+{
+    return !(*this == rhs);
+}
+
 auto Service::to_string() const -> std::string
 {
     std::string ret {this->id + "\n"};
@@ -40,7 +50,7 @@ auto Service::to_json() const -> json
 {
     json j = "{}"_json;
     j["name"] = this->name;
-    j["id"] = this->id;
+    j["_id"] = this->id;
     j["duration"] = this->duration.to_json();
     j["price"] = this->price.to_json();
     j["questions"] = "[]"_json;

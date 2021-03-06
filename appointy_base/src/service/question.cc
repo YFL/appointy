@@ -29,7 +29,7 @@ auto Question::to_string() const -> std::string
     return this->text + "\n" + this->answer_signature->to_string();
 }
 
-auto Question::to_json() const -> json
+auto Question::to_json() const noexcept -> json
 {
     json j = "{}"_json;
     j["text"] = this->text;

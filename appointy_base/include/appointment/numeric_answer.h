@@ -24,7 +24,7 @@ public:
         return ret + std::to_string(this->number) + "\n";
     }
 
-    virtual auto to_json() const -> nlohmann::json override
+    virtual auto to_json() const noexcept -> nlohmann::json override
     {
         nlohmann::json j = "{}"_json;
         j["answer_signature_id"] = this->answer_signature_id;

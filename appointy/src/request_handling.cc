@@ -39,7 +39,7 @@ auto add(Collection collection, const T &init)
     return add(new_collection, init + begin);
 }
 
-auto accept_appointment_request(const std::string &r, const std::string &connection_string, const std::string &db_name) -> std::vector<AppointmentOffer>
+auto accept_appointment_request(const AppointmentRequest &r, const std::string &connection_string, const std::string &db_name) -> std::vector<AppointmentOffer>
 {
     using nlohmann::json;
     mongocxx::uri uri {connection_string};
@@ -208,20 +208,18 @@ auto accept_appointment_request(const std::string &r, const std::string &connect
     return gaps;
 }
 
-auto book_appointment(const std::string &a, const std::string &db_connection_string, const std::string &db_name) -> bool
+auto book_appointment(const Appointment &appointment, const std::string &db_connection_string, const std::string &db_name) -> bool
 {
     mongocxx::uri uri {db_connection_string};
     mongocxx::client client {uri};
 
     mongocxx::collection collection {client[db_name]["Appointments"]};
 
-    auto appointment = Appointment {JSON_Parser::parse_appointment(nlohmann::json::parse(a))};
-
-    auto appointment_offers = accept_appointment_request(appointment.request.to_json(), db_connection_string, db_name);
+    auto appointment_offers = accept_appointment_request(appointment.request, db_connection_string, db_name);
 
     for(auto &offer : appointment_offers)
     {
-        if(offer.date == appointment.date && offer.start <= appointment.start && offer.start + offer.duration >= appointment.end)
+        if(offer.date == appointment.date && offer.start == appointment.start && offer.start + offer.duration == appointment.end)
         {
             bsoncxx::document::view_or_value document {bsoncxx::from_json(appointment.to_json().dump())};
 

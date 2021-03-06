@@ -46,7 +46,7 @@ auto Service::to_string() const -> std::string
     return ret;
 }
 
-auto Service::to_json() const -> json
+auto Service::to_json() const noexcept -> json
 {
     json j = "{}"_json;
     j["name"] = this->name;

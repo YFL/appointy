@@ -21,7 +21,7 @@ public:
     AppointmentOffer(const Date &date, const Time &start, const Time &duration, const AppointmentRequest &request);
 
 public:
-    auto to_json() const -> nlohmann::json;
+    auto to_json() const noexcept -> nlohmann::json;
     auto to_string() const -> std::string;
 };
 

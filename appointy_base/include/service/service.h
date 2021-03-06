@@ -31,7 +31,7 @@ public:
 
 public:
     auto to_string() const -> std::string;
-    auto to_json() const -> nlohmann::json;
+    auto to_json() const noexcept -> nlohmann::json;
 };
 
 } // namespace appointy

@@ -35,7 +35,7 @@ auto Option::to_string() const -> std::string
     return ret + this->duration.to_string() + "\n";
 }
 
-auto Option::to_json() const -> json
+auto Option::to_json() const noexcept -> json
 {
     json j = "{}"_json;
     j["id"] = this->id;

@@ -39,7 +39,7 @@ public:
         return ret + duration.to_string() + "\n";
     }
     
-    virtual auto to_json() const -> nlohmann::json override
+    virtual auto to_json() const noexcept -> nlohmann::json override
     {
         nlohmann::json j = "{}"_json;
         j["id"] = this->id;

@@ -64,7 +64,7 @@ auto Price::to_string() const -> std::string
     return ret + (this->hundredth < 10 ? "0" + std::to_string(this->hundredth) : std::to_string(this->hundredth));
 }
 
-auto Price::to_json() const -> json
+auto Price::to_json() const noexcept -> json
 {
     json j = "{}"_json;
     j["main"] = this->unit;

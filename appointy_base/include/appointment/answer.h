@@ -51,7 +51,7 @@ public:
 
 public:
     virtual auto to_string() const -> std::string = 0;
-    virtual auto to_json() const -> nlohmann::json = 0;
+    virtual auto to_json() const noexcept -> nlohmann::json = 0;
 
 protected:
     Answer(const std::string &answer_signature_id, AnswerType answer_type);

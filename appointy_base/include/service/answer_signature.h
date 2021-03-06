@@ -62,7 +62,7 @@ protected:
 
 public:
     virtual auto to_string() const -> std::string = 0;
-    virtual auto to_json() const -> nlohmann::json = 0;
+    virtual auto to_json() const noexcept -> nlohmann::json = 0;
 };
 
 } // namespace appointy

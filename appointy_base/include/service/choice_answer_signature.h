@@ -53,7 +53,7 @@ public:
 
 public:
     virtual auto to_string() const -> std::string override;
-    virtual auto to_json() const -> nlohmann::json override;
+    virtual auto to_json() const noexcept -> nlohmann::json override;
 };
 
 } // namespace appointy

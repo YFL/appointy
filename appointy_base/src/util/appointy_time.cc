@@ -146,7 +146,7 @@ auto Time::to_string() const -> std::string
     return ret + std::to_string(this->seconds());
 }
 
-auto Time::to_json() const -> json
+auto Time::to_json() const noexcept -> json
 {
     json j = _time;
 

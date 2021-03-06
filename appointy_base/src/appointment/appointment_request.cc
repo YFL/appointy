@@ -34,7 +34,7 @@ auto AppointmentRequest::to_string() const -> std::string
     return ret;
 }
 
-auto AppointmentRequest::to_json() const -> json
+auto AppointmentRequest::to_json() const noexcept -> json
 {
     json j = "{}"_json;
     j["first_date"] = this->first_date.to_json();

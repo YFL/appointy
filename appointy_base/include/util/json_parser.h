@@ -34,7 +34,7 @@ public:
         auto id = std::string {};
         try
         {
-            auto id_json = answer_signature.at("_id");
+            auto id_json = answer_signature.at("id");
             if(id_json.is_object())
             {
                 id = id_json.at("$oid");

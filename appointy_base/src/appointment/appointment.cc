@@ -27,7 +27,7 @@ auto Appointment::to_string() const -> std::string
     return ret + request.to_string(); 
 }
 
-auto Appointment::to_json() const -> json
+auto Appointment::to_json() const noexcept -> json
 {
     json j = "{}"_json;
     j["id"] = this->id;

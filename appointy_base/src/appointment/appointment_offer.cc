@@ -14,7 +14,7 @@ AppointmentOffer::AppointmentOffer(const Date &date, const Time &start, const Ti
 
 }
 
-auto AppointmentOffer::to_json() const -> json
+auto AppointmentOffer::to_json() const noexcept -> json
 {
     json j = "{}"_json;
     j["date"] = this->date.to_json();

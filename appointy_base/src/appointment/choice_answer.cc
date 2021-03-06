@@ -25,7 +25,7 @@ auto ChoiceAnswer::to_string() const -> std::string
     return ret + "\n";
 }
 
-auto ChoiceAnswer::to_json() const -> json
+auto ChoiceAnswer::to_json() const noexcept-> json
 {
     json j = "{}"_json;
     j["answer_signature_id"] = this->answer_signature_id;

@@ -140,7 +140,7 @@ auto JSON_Parser::parse_choice_answer_signature(const nlohmann::json &answer_sig
     auto id = std::string {};
     try
     {
-        auto id_json = answer_signature.at("_id");
+        auto id_json = answer_signature.at("id");
         if(id_json.is_object())
         {
             id = id_json.at("$oid");
@@ -454,14 +454,22 @@ auto JSON_Parser::parse_appointment_request(const nlohmann::json &request) -> Ap
 
 auto JSON_Parser::parse_appointment(const nlohmann::json &appointment) -> Appointment
 {
-    std::string id {"0"};
+    auto id = std::string {};
     try
     {
-        id = appointment.at("id");
+        auto id_json = appointment.at("_id");
+        if(id_json.is_object())
+        {
+            id = id_json.at("$oid");
+        }
+        else
+        {
+            id = id_json;
+        }
     }
     catch(const nlohmann::detail::out_of_range &)
     {
-        
+        // intentionally left blank
     }
     
     try

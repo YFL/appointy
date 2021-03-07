@@ -48,24 +48,22 @@ auto accept_appointment_request(const AppointmentRequest &r, const std::string &
     mongocxx::collection appointments_collection {client[db_name]["Appointments"]};
     // std::string query = "SELECT `date`, start_time, finish_time FROM Appointments WHERE `date` >= $first AND `date` <= $last_date AND start_time <= $interval_end AND finish_time >= $interval_start ORDER BY `date` ASC, start_time ASC;";
 
-    AppointmentRequest request {JSON_Parser::parse_appointment_request(json::parse(r))};
-
     document filter;
     auto filter_value = filter << "$and" << open_array 
         << open_document << "date" 
             << open_document
-                << "$gte" << request.first_date.date()
-                << "$lte" << request.last_date.date()
+                << "$gte" << r.first_date.date()
+                << "$lte" << r.last_date.date()
             << close_document
         << close_document
         << open_document << "start_time"
             << open_document
-                << "$lte" << request.interval_end.time()
+                << "$lte" << r.interval_end.time()
             << close_document
         << close_document
         << open_document << "finish_time"
             << open_document
-                << "$gte" << request.interval_start.time()
+                << "$gte" << r.interval_start.time()
             << close_document
         << close_document
     << close_array << finalize;
@@ -84,12 +82,12 @@ auto accept_appointment_request(const AppointmentRequest &r, const std::string &
     
     if(appointments.empty())
     {
-        int days = request.last_date.days_in_year() - request.first_date.days_in_year();
-        gaps.push_back(AppointmentOffer {request.first_date, request.interval_start, request.interval_end - request.interval_start, request});
+        int days = r.last_date.days_in_year() - r.first_date.days_in_year();
+        gaps.push_back(AppointmentOffer {r.first_date, r.interval_start, r.interval_end - r.interval_start, r});
         for(int i = 1; i < days; i++)
         {
             // TODO not all gaps added. If the gap ends before the requested end time and there is enough time to add another gap, than we shall do it.
-            gaps.push_back(AppointmentOffer {gaps[i-1].date++, request.interval_start, request.interval_end - request.interval_start, request});
+            gaps.push_back(AppointmentOffer {gaps[i-1].date++, r.interval_start, r.interval_end - r.interval_start, r});
         }
 
         return gaps;
@@ -98,7 +96,7 @@ auto accept_appointment_request(const AppointmentRequest &r, const std::string &
     // query = "SELECT duration FROM Services WHERE id = $id;";
 
     filter = {};
-    filter_value = filter << "_id" << bsoncxx::oid(request.service_id) << finalize;
+    filter_value = filter << "_id" << bsoncxx::oid(r.service_id) << finalize;
 
     auto service_doc_opt = services_collection.find_one(bsoncxx::document::view_or_value {filter_value});
 
@@ -116,7 +114,7 @@ auto accept_appointment_request(const AppointmentRequest &r, const std::string &
     std::vector<Time> durations;
 
     //for(auto &answer : r.answers)
-    for(auto it = request.answers.begin(); it != request.answers.end(); it++)
+    for(auto it = r.answers.begin(); it != r.answers.end(); it++)
     {
         auto answer = *it;
         if(answer->answer_type == AnswerType::CHOICE)
@@ -177,11 +175,11 @@ auto accept_appointment_request(const AppointmentRequest &r, const std::string &
 
     Time total_duration = add(durations, base_duration);
 
-    if(appointments.front().start > request.interval_start)
+    if(appointments.front().start > r.interval_start)
     {
-        if(request.interval_start - appointments.front().start >= total_duration)
+        if(r.interval_start - appointments.front().start >= total_duration)
         {
-            gaps.push_back(AppointmentOffer {appointments.front().date, request.interval_start, total_duration, request});
+            gaps.push_back(AppointmentOffer {appointments.front().date, r.interval_start, total_duration, r});
         }
     }
 
@@ -193,16 +191,16 @@ auto accept_appointment_request(const AppointmentRequest &r, const std::string &
         {
             if(appointments[i + 1].start - appointments[i].end >= total_duration)
             {
-                gaps.push_back(AppointmentOffer {current_date, appointments[i].end, total_duration, request});
+                gaps.push_back(AppointmentOffer {current_date, appointments[i].end, total_duration, r});
             }
             i++;
         }
         i++;
     }
 
-    if(appointments.back().end < request.interval_end && request.interval_end - appointments.back().end >= total_duration)
+    if(appointments.back().end < r.interval_end && r.interval_end - appointments.back().end >= total_duration)
     {
-        gaps.push_back(AppointmentOffer {appointments.back().date, appointments.back().end, total_duration, request});
+        gaps.push_back(AppointmentOffer {appointments.back().date, appointments.back().end, total_duration, r});
     }
 
     return gaps;
@@ -219,7 +217,7 @@ auto book_appointment(const Appointment &appointment, const std::string &db_conn
 
     for(auto &offer : appointment_offers)
     {
-        if(offer.date == appointment.date && offer.start == appointment.start && offer.start + offer.duration == appointment.end)
+        if(offer.date == appointment.date && offer.start <= appointment.start && offer.start + offer.duration >= appointment.end)
         {
             bsoncxx::document::view_or_value document {bsoncxx::from_json(appointment.to_json().dump())};
 

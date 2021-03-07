@@ -9,7 +9,7 @@ namespace appointy
 {
 
 auto accept_appointment_request(const AppointmentRequest &request, const std::string &connection_string, const std::string &db_name) -> std::vector<AppointmentOffer>;
-auto book_appointment(const Appointment &booking_request, const std::string &db_connection_string, const std::string &db_name) -> bool;
+auto book_appointment(const Appointment &appointment, const std::string &db_connection_string, const std::string &db_name) -> bool;
 
 } // namespace appointy
 

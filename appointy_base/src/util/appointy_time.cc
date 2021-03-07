@@ -18,7 +18,7 @@ Time::Time(const std::time_t time) noexcept :
 Time::Time(int hours, int minutes, int seconds) :
     _time {}
 {
-    if(hours < 0)
+    if(hours < 0 || hours > 23)
     {
         throw Exception {"Hours must be at least 0"};
     }

@@ -11,7 +11,7 @@ auto main() -> int
 {
     using namespace appointy;
 
-    mongocxx::instance instance;
+    auto instance = mongocxx::instance {};
 
     auto services = load_services_from_json("./services_examples_test.json");
 

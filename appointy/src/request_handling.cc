@@ -41,15 +41,71 @@ auto add(Collection collection, const T &init)
 
 auto accept_appointment_request(const AppointmentRequest &r, const std::string &connection_string, const std::string &db_name) -> std::vector<AppointmentOffer>
 {
-    using nlohmann::json;
-    mongocxx::uri uri {connection_string};
-    mongocxx::client client {uri};
-    mongocxx::collection services_collection {client[db_name]["Services"]};
-    mongocxx::collection appointments_collection {client[db_name]["Appointments"]};
-    // std::string query = "SELECT `date`, start_time, finish_time FROM Appointments WHERE `date` >= $first AND `date` <= $last_date AND start_time <= $interval_end AND finish_time >= $interval_start ORDER BY `date` ASC, start_time ASC;";
+    auto uri = mongocxx::uri {connection_string};
+    auto client = mongocxx::client {uri};
+    auto services_collection = client[db_name]["Services"];
+    auto appointments_collection = client[db_name]["Appointments"];
 
-    document filter;
-    auto filter_value = filter << "$and" << open_array 
+    if(r.interval_start > r.interval_end)
+    {
+        throw Exception {"The interval's start is bigger then it's end"};
+    }
+
+    auto filter = document {} << "_id" << bsoncxx::oid(r.service_id) << finalize;
+
+    auto service_doc_optional = services_collection.find_one({filter});
+    if(!service_doc_optional)
+    {
+        throw Exception {"The service couldn't be found by the given id " + r.service_id};
+    }
+
+    auto base_duration = Time {(service_doc_optional.value().view().find("duration"))->get_int64()};
+
+    auto durations = std::vector<Time> {};
+    for(auto it = r.answers.begin(); it != r.answers.end(); it++)
+    {
+        auto &answer = *it;
+        filter = document {} << "questions.answer_signature._id" << bsoncxx::oid {answer->answer_signature_id} << finalize;
+        auto options = mongocxx::options::find {};
+        options.projection(document {} << "duration" << 1 << finalize);
+        auto answer_signature_optional = services_collection.find_one({filter}, {options});
+        if(!answer_signature_optional)
+        {
+            throw Exception {"The answer signature couldn't be found by the given answer_signature_id " + answer->answer_signature_id};
+        }
+
+        auto duration = JSON_Parser::parse_time(nlohmann::json::parse(bsoncxx::to_json(answer_signature_optional.value())));
+
+        if(answer->answer_type == AnswerType::CHOICE)
+        {
+            auto a = dynamic_cast<ChoiceAnswer &>(*answer);
+            for(int id : a.ids)
+            {
+                durations.push_back(duration);
+            }
+        }
+        else if(answer->answer_type == AnswerType::INT)
+        {
+            auto a = dynamic_cast<NumericAnswer<int> &>(*answer);
+            durations.push_back(duration * a.number);
+        }
+        else
+        {
+            auto a = dynamic_cast<NumericAnswer<double> &>(*answer);
+            durations.push_back(duration * a.number);
+        }
+    }
+
+    auto total_duration = add(durations, base_duration);
+
+    // TODO correction based on historical completion times
+
+    if(r.interval_end - r.interval_start < total_duration)
+    {
+        throw Exception {"The requested interval is smaller then the completion time of this configuration"};
+    }
+
+    filter = document {} << "$and" << open_array 
         << open_document << "date" 
             << open_document
                 << "$gte" << r.first_date.date()
@@ -69,16 +125,16 @@ auto accept_appointment_request(const AppointmentRequest &r, const std::string &
     << close_array << finalize;
             
 
-    std::vector<Appointment> appointments;
+    auto appointments = std::vector<Appointment> {};
 
-    auto cursor = appointments_collection.find(bsoncxx::document::view_or_value {filter_value}, mongocxx::options::find().sort(document {} << "date" << 1 << "start_time" << 1 << finalize));
+    auto cursor = appointments_collection.find(bsoncxx::document::view_or_value {filter}, mongocxx::options::find().sort(document {} << "date" << 1 << "start_time" << 1 << finalize));
 
     for(auto it = cursor.begin(); it != cursor.end(); it++)
     {
-        appointments.push_back(JSON_Parser::parse_appointment(json::parse(bsoncxx::to_json(*it))));
+        appointments.push_back(JSON_Parser::parse_appointment(nlohmann::json::parse(bsoncxx::to_json(*it))));
     }
 
-    std::vector<AppointmentOffer> gaps;
+    auto gaps = std::vector<AppointmentOffer> {};
     
     if(appointments.empty())
     {
@@ -86,17 +142,69 @@ auto accept_appointment_request(const AppointmentRequest &r, const std::string &
         gaps.push_back(AppointmentOffer {r.first_date, r.interval_start, r.interval_end - r.interval_start, r});
         for(int i = 1; i < days; i++)
         {
+            // it seems to me, that the following line is not reasonable. It may be, but seems not to be.
+            // reasoning: The requested time is not the same as the completion time of the requested service.
+            // So if the gap is as big as the requested time, than there can be no more gaps following it, because
+            // the client can not get the service after the requested time.
+            //
+            // So the problem with the todo is, that we don't return a gap of the size of the requested service's
+            // completion time, but the size of the requested interval, yet the todo thinks it's the other way around
             // TODO not all gaps added. If the gap ends before the requested end time and there is enough time to add another gap, than we shall do it.
             gaps.push_back(AppointmentOffer {gaps[i-1].date++, r.interval_start, r.interval_end - r.interval_start, r});
         }
 
         return gaps;
     }
+    
+    // check whether there is enough time before the first 
+    // booked appointment's start from the requested interval's
+    // start IF the first booked appointment is starting
+    // later then the requested interval
+    if(appointments.front().start > r.interval_start)
+    {
+        if(r.interval_start - appointments.front().start >= total_duration)
+        {
+            gaps.push_back(AppointmentOffer {appointments.front().date, r.interval_start, total_duration, r});
+        }
+    }
 
-    // query = "SELECT duration FROM Services WHERE id = $id;";
+    auto i = 0u;
+    while(i < appointments.size() - 1)
+    {
+        auto current_date = appointments[i].date;
+        while(appointments[i].date == current_date && i < appointments.size() - 1)
+        {
+            if(appointments[i + 1].start - appointments[i].end >= total_duration)
+            {
+                gaps.push_back(AppointmentOffer {current_date, appointments[i].end, total_duration, r});
+            }
+            i++;
+        }
+    }
 
-    filter = {};
-    filter_value = filter << "_id" << bsoncxx::oid(r.service_id) << finalize;
+    if(appointments.back().end < r.interval_end && r.interval_end - appointments.back().end >= total_duration)
+    {
+        gaps.push_back(AppointmentOffer {appointments.back().date, appointments.back().end, total_duration, r});
+    }
+
+    return gaps;
+}
+
+/* 
+auto accept_appointment_request(const AppointmentRequest &r, const std::string &connection_string, const std::string &db_name) -> std::vector<AppointmentOffer>
+{
+    auto uri = mongocxx::uri {connection_string};
+    auto client = mongocxx::client {uri};
+    auto services_collection = mongocxx::collection {client[db_name]["Services"]};
+    auto appointments_collection = mongocxx::collection {client[db_name]["Appointments"]};
+    
+    if(r.interval_start > r.interval_end)
+    {
+        throw Exception {"The interval's start is bigger than it's end"};
+    }
+    
+    auto filter = document {};
+    auto filter_value = filter << "_id" << bsoncxx::oid(r.service_id) << finalize;
 
     auto service_doc_opt = services_collection.find_one(bsoncxx::document::view_or_value {filter_value});
 
@@ -109,23 +217,22 @@ auto accept_appointment_request(const AppointmentRequest &r, const std::string &
 
     auto duration_elem = *(service_doc.view().find("duration"));
 
-    Time base_duration {duration_elem.get_int64()};
+    auto base_duration = Time {duration_elem.get_int64()};
 
-    std::vector<Time> durations;
+    auto durations = std::vector<Time> {};
 
-    //for(auto &answer : r.answers)
     for(auto it = r.answers.begin(); it != r.answers.end(); it++)
     {
-        auto answer = *it;
+        auto &answer = *it;
         if(answer->answer_type == AnswerType::CHOICE)
         {
-            ChoiceAnswer &a = dynamic_cast<ChoiceAnswer &>(*answer);
+            auto &a = dynamic_cast<ChoiceAnswer &>(*answer);
 
             for(int id : a.ids)
             {
                 // query = "SELECT duration FROM Choice_Answer_Signatures WHERE id = $id;";
 
-                filter = {};
+                filter = document {};
                 filter_value = filter << "questions.answer_signature._id" << bsoncxx::oid {a.answer_signature_id} << finalize;
 
                 auto projection_doc = document {} << "duration" << 1 << finalize;
@@ -161,20 +268,83 @@ auto accept_appointment_request(const AppointmentRequest &r, const std::string &
 
                 if(answer->answer_type == AnswerType::INT)
                 {
-                    NumericAnswer<int> &a = dynamic_cast<NumericAnswer<int> &>(*answer);
+                    auto &a = dynamic_cast<NumericAnswer<int> &>(*answer);
                     durations.push_back(duration * a.number);
                 }
                 else
                 {
-                    NumericAnswer<double> &a = dynamic_cast<NumericAnswer<double> &>(*answer);
+                    auto &a = dynamic_cast<NumericAnswer<double> &>(*answer);
                     durations.push_back(duration * a.number);
                 }
             }
         }
     }
 
-    Time total_duration = add(durations, base_duration);
+    auto total_duration = add(durations, base_duration);
 
+    // do the correction of the total_duration by the statistics of historical data
+    
+    if(total_duration > r.interval_end - r.interval_start)
+    {
+        throw Exception {"The requested interval is less than the completition time for this configuration"};
+    }
+
+    filter = {};
+    filter_value = filter << "$and" << open_array 
+        << open_document << "date" 
+            << open_document
+                << "$gte" << r.first_date.date()
+                << "$lte" << r.last_date.date()
+            << close_document
+        << close_document
+        << open_document << "start_time"
+            << open_document
+                << "$lte" << r.interval_end.time()
+            << close_document
+        << close_document
+        << open_document << "finish_time"
+            << open_document
+                << "$gte" << r.interval_start.time()
+            << close_document
+        << close_document
+    << close_array << finalize;
+            
+
+    auto appointments = std::vector<Appointment> {};
+
+    auto cursor = appointments_collection.find(bsoncxx::document::view_or_value {filter_value}, mongocxx::options::find().sort(document {} << "date" << 1 << "start_time" << 1 << finalize));
+
+    for(auto it = cursor.begin(); it != cursor.end(); it++)
+    {
+        appointments.push_back(JSON_Parser::parse_appointment(nlohmann::json::parse(bsoncxx::to_json(*it))));
+    }
+
+    auto gaps = std::vector<AppointmentOffer> {};
+    
+    if(appointments.empty())
+    {
+        int days = r.last_date.days_in_year() - r.first_date.days_in_year();
+        gaps.push_back(AppointmentOffer {r.first_date, r.interval_start, r.interval_end - r.interval_start, r});
+        for(int i = 1; i < days; i++)
+        {
+            // it seems to me, that the following line is not reasonable. It may be, but seems not to be.
+            // reasoning: The requested time is not the same as the completion time of the requested service.
+            // So if the gap is as big as the requested time, than there can be no more gaps following it, because
+            // the client can not get the service after the requested time.
+            //
+            // So the problem with the todo is, that we don't return a gap of the size of the requested service's
+            // completion time, but the size of the requested interval, yet the todo thinks it's the other way around
+            // TODO not all gaps added. If the gap ends before the requested end time and there is enough time to add another gap, than we shall do it.
+            gaps.push_back(AppointmentOffer {gaps[i-1].date++, r.interval_start, r.interval_end - r.interval_start, r});
+        }
+
+        return gaps;
+    }
+    
+    // check whether there is enough time before the first 
+    // booked appointment's start from the requested interval's
+    // start IF the first booked appointment is starting
+    // later then the requested interval
     if(appointments.front().start > r.interval_start)
     {
         if(r.interval_start - appointments.front().start >= total_duration)
@@ -183,10 +353,10 @@ auto accept_appointment_request(const AppointmentRequest &r, const std::string &
         }
     }
 
-    int i = 0;
+    auto i = 0u;
     while(i < appointments.size() - 1)
     {
-        Date current_date = appointments[i].date;
+        auto current_date = appointments[i].date;
         while(appointments[i].date == current_date && i < appointments.size() - 1)
         {
             if(appointments[i + 1].start - appointments[i].end >= total_duration)
@@ -195,7 +365,6 @@ auto accept_appointment_request(const AppointmentRequest &r, const std::string &
             }
             i++;
         }
-        i++;
     }
 
     if(appointments.back().end < r.interval_end && r.interval_end - appointments.back().end >= total_duration)
@@ -205,7 +374,7 @@ auto accept_appointment_request(const AppointmentRequest &r, const std::string &
 
     return gaps;
 }
-
+ */
 auto book_appointment(const Appointment &appointment, const std::string &db_connection_string, const std::string &db_name) -> bool
 {
     mongocxx::uri uri {db_connection_string};

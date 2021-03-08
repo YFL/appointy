@@ -53,7 +53,7 @@ auto accept_appointment_request(const AppointmentRequest &r, const std::string &
 
     auto filter = document {} << "_id" << bsoncxx::oid(r.service_id) << finalize;
 
-    auto service_doc_optional = services_collection.find_one({filter});
+    auto service_doc_optional = services_collection.find_one(filter.view());
     if(!service_doc_optional)
     {
         throw Exception {"The service couldn't be found by the given id " + r.service_id};
@@ -66,15 +66,14 @@ auto accept_appointment_request(const AppointmentRequest &r, const std::string &
     {
         auto &answer = *it;
         filter = document {} << "questions.answer_signature._id" << bsoncxx::oid {answer->answer_signature_id} << finalize;
-        auto options = mongocxx::options::find {};
-        options.projection(document {} << "duration" << 1 << finalize);
-        auto answer_signature_optional = services_collection.find_one({filter}, {options});
-        if(!answer_signature_optional)
+        auto result_optional = services_collection.find_one(filter.view()/* , mongocxx::options::find().projection(document {} << "duration" << 1 << finalize) */);
+        if(!result_optional)
         {
             throw Exception {"The answer signature couldn't be found by the given answer_signature_id " + answer->answer_signature_id};
         }
-
-        auto duration = JSON_Parser::parse_time(nlohmann::json::parse(bsoncxx::to_json(answer_signature_optional.value())));
+        auto elem = result_optional.value().view()["duration"];
+        auto duration_json = nlohmann::json::parse(bsoncxx::to_json(document {} << "duration" << elem.get_value() << finalize))["duration"];
+        auto duration = JSON_Parser::parse_time(duration_json);
 
         if(answer->answer_type == AnswerType::CHOICE)
         {
@@ -127,7 +126,7 @@ auto accept_appointment_request(const AppointmentRequest &r, const std::string &
 
     auto appointments = std::vector<Appointment> {};
 
-    auto cursor = appointments_collection.find(bsoncxx::document::view_or_value {filter}, mongocxx::options::find().sort(document {} << "date" << 1 << "start_time" << 1 << finalize));
+    auto cursor = appointments_collection.find(filter.view(), mongocxx::options::find().sort(document {} << "date" << 1 << "start_time" << 1 << finalize));
 
     for(auto it = cursor.begin(); it != cursor.end(); it++)
     {

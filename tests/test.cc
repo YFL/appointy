@@ -25,18 +25,24 @@ auto main() -> int
         std::cout << s.to_json().dump() << std::endl;
     }
 
-    auto appointment_request_str = open_file_to_string("./appointment_request_test2.json");
+    auto appointment_request_str = open_file_to_string("./appointment_request_test3.json");
     auto appointment_request = JSON_Parser::parse_appointment_request(nlohmann::json::parse(appointment_request_str));
 
     auto appointment_offers = accept_appointment_request(appointment_request, "mongodb://localhost", "appointy_db");
 
-    std::cout << "\n\n\n";
-    for(auto offer : appointment_offers)
+    std::cout << "\n\n\nappointment_offers.size(): " << appointment_offers.size() << "[ \n";
+    for(auto i = std::vector<AppointmentOffer>::size_type {0}; i < appointment_offers.size(); i++)
     {
-        std::cout << offer.to_json() << std::endl;
+        std::cout << appointment_offers[i].to_json();
+        if(i < appointment_offers.size() - 1)
+        {
+            std::cout << ',';
+        }
+        std::cout << std::endl;
     }
+    std::cout << "]" << std::endl;
 
-    auto appointment = JSON_Parser::parse_appointment(nlohmann::json::parse(open_file_to_string("./appointment_test.json")));
+    auto appointment = JSON_Parser::parse_appointment(nlohmann::json::parse(open_file_to_string("./appointment_test2.json")));
 
     std::cout << book_appointment(appointment, "mongodb://localhost", "appointy_db") << std::endl;
 

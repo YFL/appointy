@@ -140,7 +140,7 @@ auto JSON_Parser::parse_choice_answer_signature(const nlohmann::json &answer_sig
     auto id = std::string {};
     try
     {
-        auto id_json = answer_signature.at("id");
+        auto id_json = answer_signature.at("_id");
         if(id_json.is_object())
         {
             id = id_json.at("$oid");

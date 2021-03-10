@@ -199,7 +199,7 @@ auto accept_appointment_request(const AppointmentRequest &r, const std::string &
     {
         if(r.interval_start - appointments.front().start >= total_duration)
         {
-            gaps.push_back(AppointmentOffer {appointments.front().date, r.interval_start, total_duration, r});
+            gaps.push_back(AppointmentOffer {appointments.front().date, r.interval_start, appointments.front().start - r.interval_start, r});
         }
     }
 
@@ -211,7 +211,7 @@ auto accept_appointment_request(const AppointmentRequest &r, const std::string &
         {
             if(appointments[i + 1].start - appointments[i].end >= total_duration)
             {
-                gaps.push_back(AppointmentOffer {current_date, appointments[i].end, total_duration, r});
+                gaps.push_back(AppointmentOffer {current_date, appointments[i].end, appointments[i + 1].start - appointments[i].end, r});
             }
             i++;
         }

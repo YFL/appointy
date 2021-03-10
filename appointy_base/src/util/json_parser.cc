@@ -367,7 +367,7 @@ auto JSON_Parser::parse_answer(const nlohmann::json &answer) -> Answer *
     {
         try
         {
-            return new NumericAnswer<int> {answer_signature_id, answer.at("number")};
+            return new NumericAnswer<double> {answer_signature_id, answer.at("number")};
         }
         catch(const nlohmann::detail::out_of_range &)
         {

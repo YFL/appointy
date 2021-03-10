@@ -63,20 +63,6 @@ auto load_services_from_json(const std::string &ptj) -> std::vector<Service>
     }
 }
 
-auto set_up_services_collection(const std::string &connection_string, const std::string &db_name) -> void
-{
-    mongocxx::uri uri {connection_string};
-    mongocxx::client client {uri};
-    mongocxx::collection services {client[db_name]["Services"]};
-
-    auto keys_builder = bsoncxx::builder::stream::document {};
-    auto keys = keys_builder << "name" << 1 << bsoncxx::builder::stream::finalize;
-    auto options = mongocxx::options::index {};
-    options.name("name_unique");
-    options.unique(true);
-    services.create_index(bsoncxx::document::view_or_value {keys}, bsoncxx::document::view_or_value {options});
-}
-
 auto store_services(const std::vector<Service> &services, const std::string &connection_string, const std::string &db_name) -> bool
 {
     mongocxx::uri uri {connection_string};

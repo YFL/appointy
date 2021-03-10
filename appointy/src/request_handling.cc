@@ -39,32 +39,27 @@ auto add(Collection collection, const T &init)
     return add(new_collection, init + begin);
 }
 
-auto accept_appointment_request(const AppointmentRequest &r, const std::string &connection_string, const std::string &db_name) -> std::vector<AppointmentOffer>
+auto get_service_from_db(const std::string &service_id, const std::string &connection_string, const std::string &db_name)
 {
     auto uri = mongocxx::uri {connection_string};
     auto client = mongocxx::client {uri};
     auto services_collection = client[db_name]["Services"];
-    auto appointments_collection = client[db_name]["Appointments"];
 
-    if(r.interval_start > r.interval_end)
-    {
-        throw Exception {"The interval's start is bigger then it's end"};
-    }
-
-    auto filter = document {} << "_id" << bsoncxx::oid(r.service_id) << finalize;
+    auto filter = document {} << "_id" << bsoncxx::oid(service_id) << finalize;
 
     auto service_doc_optional = services_collection.find_one(filter.view());
     if(!service_doc_optional)
     {
-        throw Exception {"The service couldn't be found by the given id " + r.service_id};
+        throw Exception {"The service couldn't be found by the given id " + service_id};
     }
 
-    auto service = JSON_Parser::parse_service(nlohmann::json::parse(bsoncxx::to_json(service_doc_optional.value().view())));
+    return JSON_Parser::parse_service(nlohmann::json::parse(bsoncxx::to_json(service_doc_optional.value().view())));
+}
 
+auto duration_of_config(const Service &service, const std::vector<std::shared_ptr<Answer>> &answers)
+{
     auto durations = std::vector<Time> {};
-
-    // collecting the durations
-    for(auto it = r.answers.begin(); it != r.answers.end(); it++)
+    for(auto it = answers.begin(); it != answers.end(); it++)
     {
         auto &answer = *it;
 
@@ -113,16 +108,39 @@ auto accept_appointment_request(const AppointmentRequest &r, const std::string &
         }
     }
 
-    auto total_duration = add(durations, service.duration);
+    return add(durations, service.duration);
+}
+
+auto accept_estimated_duration_request(const DurationRequest &r, const std::string &connection_string, const std::string &db_name) -> Time
+{
+    auto service = get_service_from_db(r.service_id, connection_string, db_name);
 
     // TODO correction based on historical completion times
+    
+    return duration_of_config(service, r.configuration);
+}
 
+auto accept_appointment_request(const AppointmentRequest &r, const std::string &connection_string, const std::string &db_name) -> std::vector<AppointmentOffer>
+{
+    auto uri = mongocxx::uri {connection_string};
+    auto client = mongocxx::client {uri};
+    auto services_collection = client[db_name]["Services"];
+    auto appointments_collection = client[db_name]["Appointments"];
+
+    if(r.interval_start > r.interval_end)
+    {
+        throw Exception {"The interval's start is bigger then it's end"};
+    }
+
+    // collecting the durations
+    auto total_duration = accept_estimated_duration_request({r.service_id, r.answers}, connection_string, db_name);
+    
     if(r.interval_end - r.interval_start < total_duration)
     {
         throw Exception {"The requested interval is smaller then the completion time of this configuration"};
     }
 
-    filter = document {} << "$and" << open_array 
+    auto filter = document {} << "$and" << open_array 
         << open_document << "date" 
             << open_document
                 << "$gte" << r.first_date.date()
@@ -201,11 +219,14 @@ auto accept_appointment_request(const AppointmentRequest &r, const std::string &
 
     if(appointments.back().end < r.interval_end && r.interval_end - appointments.back().end >= total_duration)
     {
-        gaps.push_back(AppointmentOffer {appointments.back().date, appointments.back().end, total_duration, r});
+        gaps.push_back(AppointmentOffer {appointments.back().date, appointments.back().end, r.interval_end - appointments.back().end, r});
     }
 
     auto date = appointments.back().date++;
-    for(auto i = int {0}; i < r.last_date.days_in_year() - date.days_in_year(); i++)
+
+    // The + 1 means: add the subtracted day back (f.e.: 31 - 11 = 20, but if we wann include 11 too, then it changes to 31 - 10)
+    // the above numbers are days of january, so past days in the given year (including the current day)
+    for(auto i = int {0}; i < r.last_date.days_in_year() - date.days_in_year() + 1; i++)
     {
         gaps.push_back(AppointmentOffer {date + i, r.interval_start, r.interval_end - r.interval_start, r});
     }

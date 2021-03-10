@@ -2,6 +2,7 @@
 
 #include <mongocxx/instance.hpp>
 
+#include <db_utils.h>
 #include <io_ops.h>
 #include <appointment_request.h>
 #include <json_parser.h>
@@ -15,7 +16,7 @@ auto main() -> int
 
     auto services = load_services_from_json("./services_examples_test.json");
 
-    set_up_services_collection("mongodb://localhost", "appointy_db");
+    util::set_up_services_collection("mongodb://localhost", "appointy_db");
 
     //store_services(services, "mongodb://localhost", "appointy_db");
 
@@ -27,6 +28,10 @@ auto main() -> int
 
     auto appointment_request_str = open_file_to_string("./appointment_request_test3.json");
     auto appointment_request = JSON_Parser::parse_appointment_request(nlohmann::json::parse(appointment_request_str));
+
+    auto estimated_duration = accept_estimated_duration_request({appointment_request.service_id, appointment_request.answers}, "mongodb://localhost", "appointy_db");
+
+    std::cout << estimated_duration.to_json().dump() << std::endl;
 
     auto appointment_offers = accept_appointment_request(appointment_request, "mongodb://localhost", "appointy_db");
 

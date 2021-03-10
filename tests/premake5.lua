@@ -8,6 +8,7 @@ project "test"
     includedirs
     {
         "/usr/include/mongocxx/v_noabi",
+        "/usr/include/bsoncxx/v_noabi",
         "../appointy/include/",
         "../appointy_base/include/**",
         "../ext/json/include",

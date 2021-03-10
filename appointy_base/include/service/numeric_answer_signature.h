@@ -42,7 +42,7 @@ public:
     virtual auto to_json() const noexcept -> nlohmann::json override
     {
         nlohmann::json j = "{}"_json;
-        j["id"] = this->id;
+        j["_id"] = this->id;
         j["type"] = this->type == AnswerSignatureType::INT ? "int" : "double";
         if(this->min)
         {

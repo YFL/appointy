@@ -42,7 +42,7 @@ auto ChoiceAnswerSignature::to_string() const -> std::string
 auto ChoiceAnswerSignature::to_json() const noexcept -> json
 {
     json j = "{}"_json;
-    j["id"] = this->id;
+    j["_id"] = this->id;
     j["type"] = (std::string)this->type;
     j["options"] = "[]"_json;
     auto &json_options = j["options"];

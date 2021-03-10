@@ -4,7 +4,11 @@
 
 #include <bsoncxx/builder/stream/document.hpp>
 #include <bsoncxx/builder/stream/array.hpp>
+#include <bsoncxx/json.hpp>
 #include <bsoncxx/oid.hpp>
+#include <mongocxx/uri.hpp>
+#include <mongocxx/client.hpp>
+#include <mongocxx/collection.hpp>
 
 #include <appointy_exception.h>
 #include <choice_answer_signature.h>
@@ -21,6 +25,20 @@ using nlohmann::json;
 auto question_to_bson(const Question &question) -> bsoncxx::document::value;
 auto answer_signature_to_bson(const std::shared_ptr<AnswerSignature> &answer_signature) -> bsoncxx::document::value;
 auto option_to_bson(const Option &option) -> bsoncxx::document::value;
+
+auto set_up_services_collection(const std::string &connection_string, const std::string &db_name) -> void
+{
+    mongocxx::uri uri {connection_string};
+    mongocxx::client client {uri};
+    mongocxx::collection services {client[db_name]["Services"]};
+
+    auto keys_builder = bsoncxx::builder::stream::document {};
+    auto keys = keys_builder << "name" << 1 << bsoncxx::builder::stream::finalize;
+    auto options = mongocxx::options::index {};
+    options.name("name_unique");
+    options.unique(true);
+    services.create_index(bsoncxx::document::view_or_value {keys}, bsoncxx::document::view_or_value {options});
+}
 
 auto service_to_bson(const Service &service) -> bsoncxx::document::value
 {

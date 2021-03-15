@@ -4,13 +4,14 @@
 #include <fstream>
 #include <sstream>
 
+#include <bsoncxx/builder/stream/document.hpp>
+#include <bsoncxx/json.hpp>
+#include <bsoncxx/view_or_value.hpp>
 #include <mongocxx/client.hpp>
+#include <mongocxx/instance.hpp>
+#include <mongocxx/exception/query_exception.hpp>
 #include <mongocxx/stdx.hpp>
 #include <mongocxx/uri.hpp>
-#include <mongocxx/instance.hpp>
-#include <bsoncxx/view_or_value.hpp>
-#include <bsoncxx/json.hpp>
-#include <bsoncxx/builder/stream/document.hpp>
 
 #include <appointy_exception.h>
 #include <db_utils.h>
@@ -107,6 +108,72 @@ auto load_services(const std::string &connection_string, const std::string &db_n
     }
 
     return services;
+}
+
+auto store_config_completion_time(const ConfigCompletionTime &config_completion_time, const std::string &connection_string, const std::string &db_name) -> bool
+{
+    using bsoncxx::builder::stream::document;
+    using bsoncxx::builder::stream::open_array;
+    using bsoncxx::builder::stream::close_array;
+    using bsoncxx::builder::stream::finalize;
+
+    auto uri = mongocxx::uri {connection_string};
+    auto client = mongocxx::client {uri};
+    auto completion_times_collection = client[db_name]["CompletionTimes"];
+
+    auto builder_part_1 = document {} << "service_id" << config_completion_time.configuration.service_id << "completion_time" << bsoncxx::from_json(config_completion_time.completion_time.to_json().dump());
+    auto builder_part_2 = builder_part_1 << "configuration" << open_array;
+
+    for(auto &answer : config_completion_time.configuration.configuration)
+    {
+        builder_part_2 = builder_part_2 << bsoncxx::from_json(answer->to_json().dump());
+    }
+
+    auto document = builder_part_2 << close_array << finalize;
+    auto result = completion_times_collection.insert_one(document.view());
+    if(result)
+    {
+        return result.value().result().inserted_count() == 1;
+    }
+
+    return false;
+}
+
+auto load_config_completion_times(const ServiceConfiguration &configuration, const std::string &connection_string, const std::string &db_name) -> std::vector<ConfigCompletionTime>
+{
+    using bsoncxx::builder::stream::document;
+    using bsoncxx::builder::stream::open_array;
+    using bsoncxx::builder::stream::close_array;
+    using bsoncxx::builder::stream::finalize;
+
+    auto client = mongocxx::client {mongocxx::uri {connection_string}};
+    auto completion_times_collection = client[db_name]["CompletionTimes"];
+
+    auto document_builder = document {} << "service_id" << configuration.service_id << "configuration" << open_array;
+
+    for(auto &answer : configuration.configuration)
+    {
+        document_builder = document_builder << bsoncxx::from_json(answer->to_json().dump());
+    }
+
+    auto filter = document_builder << close_array << finalize;
+
+    auto cursor = completion_times_collection.find(filter.view());
+    
+    try
+    {
+        auto completion_times = std::vector<ConfigCompletionTime> {};
+        for(auto it = cursor.begin(); it != cursor.end(); it++)
+        {
+            completion_times.push_back({JSON_Parser::parse_config_completion_time(nlohmann::json::parse(bsoncxx::to_json(*it)))});
+        }
+
+        return completion_times;
+    }
+    catch(const mongocxx::query_exception &)
+    {
+        return {};
+    }
 }
 
 } // namespace appointy

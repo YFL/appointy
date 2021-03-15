@@ -12,7 +12,7 @@
 namespace appointy
 {
 
-struct AppointmentRequest
+struct AppointmentConfiguration
 {
 public:
     const Date first_date;
@@ -22,7 +22,7 @@ public:
     const ServiceConfiguration configuration;
 
 public:
-    AppointmentRequest(const Date &first, const Date &last, const Time &from, const Time &until, const ServiceConfiguration &configuration);
+    AppointmentConfiguration(const Date &first, const Date &last, const Time &from, const Time &until, const ServiceConfiguration &configuration);
 
 public:
     auto to_string() const -> std::string;

@@ -389,66 +389,50 @@ auto JSON_Parser::parse_choices(const nlohmann::json &choices) -> std::vector<ui
     return ret;
 }
 
-auto JSON_Parser::parse_appointment_request(const nlohmann::json &request) -> AppointmentRequest
+auto JSON_Parser::parse_appointment_configuration(const nlohmann::json &configuration) -> AppointmentConfiguration
 {
     try
     {
-        Date first_date = parse_date(request.at("first_date"));
+        Date first_date = parse_date(configuration.at("first_date"));
         try
         {
-            Date last_date = parse_date(request.at("last_date"));
+            Date last_date = parse_date(configuration.at("last_date"));
             
             try
             {
-                Time interval_start = parse_time(request.at("interval_start"));
+                Time interval_start = parse_time(configuration.at("interval_start"));
 
                 try
                 {
-                    Time interval_end = parse_time(request.at("interval_end"));
-                    std::string service_id;
+                    Time interval_end = parse_time(configuration.at("interval_end"));
+
                     try
                     {
-                        service_id = request.at("service_id");
+                        return {first_date, last_date, interval_start, interval_end, parse_service_configuration(configuration.at("configuration"))};
                     }
                     catch(const nlohmann::detail::out_of_range &)
                     {
-                        throw Exception("No service id in request: " + request.dump());
+                        throw Exception {"No configuration in appointment configuration: " + configuration.dump()};
                     }
-
-                    std::vector<std::shared_ptr<Answer>> answers;
-                    try
-                    {
-                        auto &answers_json = request.at("answers");
-                        for(auto &answer : answers_json)
-                        {
-                            answers.emplace_back(parse_answer(answer));
-                        }
-                    }
-                    catch(const nlohmann::detail::out_of_range &)
-                    {
-                        throw Exception("No answers in request: " + request.dump());
-                    }
-
-                    return {first_date, last_date, interval_start, interval_end, service_id, answers};
                 }
                 catch(const nlohmann::detail::out_of_range &)
                 {
-                    throw Exception("No interval_end in request: " + request.dump());
+                    throw Exception("No interval_end in configuration: " + configuration.dump());
                 }
             }
             catch(const nlohmann::detail::out_of_range &)
             {
-                throw Exception("No interval_start in request: " + request.dump());
+                throw Exception("No interval_start in configuration: " + configuration.dump());
             }
         }
         catch(const nlohmann::detail::out_of_range &)
         {
-            throw Exception("No last_date in request: " + request.dump());
+            throw Exception("No last_date in configuration: " + configuration.dump());
         }
     }
     catch(const nlohmann::detail::out_of_range &)
     {
-        throw Exception("No first_date in request: " + request.dump());
+        throw Exception("No first_date in configuration: " + configuration.dump());
     }
 }
 
@@ -486,15 +470,15 @@ auto JSON_Parser::parse_appointment(const nlohmann::json &appointment) -> Appoin
 
                 try
                 {
-                    return Appointment {id, date, start, end, JSON_Parser::parse_appointment_request(appointment.at("request"))};
+                    return Appointment {id, date, start, end, JSON_Parser::parse_appointment_configuration(appointment.at("configuration"))};
                 }
                 catch(const nlohmann::detail::out_of_range &)
                 {
-                    throw Exception {"No request in appointment:\n" + appointment.dump()};
+                    throw Exception {"No configuration in appointment:\n" + appointment.dump()};
                 }
                 catch(const Exception &e)
                 {
-                    throw Exception {"Couldn't parse appointment request from appointment:\n" + appointment.dump() + "\nWith error: " + e.what()};
+                    throw Exception {"Couldn't parse appointment configuration from appointment:\n" + appointment.dump() + "\nWith error: " + e.what()};
                 }
             }
             catch(const nlohmann::detail::out_of_range &)
@@ -511,6 +495,59 @@ auto JSON_Parser::parse_appointment(const nlohmann::json &appointment) -> Appoin
     catch(const nlohmann::detail::out_of_range &)
     {
         throw Exception {"No date in appointment:\n" + appointment.dump()};
+    }
+}
+
+auto JSON_Parser::parse_service_configuration(const nlohmann::json &service_configuration) -> ServiceConfiguration
+{
+    try
+    {
+        auto service_id = service_configuration.at("service_id");
+
+        try
+        {
+            auto configuration_json = service_configuration.at("configuration");
+
+            auto configuration = std::vector<std::shared_ptr<Answer>> {};
+            configuration.reserve(configuration_json.size());
+
+            for(auto &answer : configuration_json)
+            {
+                configuration.push_back(std::shared_ptr<Answer> {parse_answer(answer)});
+            }
+
+            return  {service_id, configuration};
+        }
+        catch(const nlohmann::detail::out_of_range &)
+        {
+            throw Exception {"No configuration in service configuration: " + service_configuration.dump()};
+        }
+        
+    }
+    catch(const nlohmann::detail::out_of_range &)
+    {
+        throw Exception {"No service_id in service configuration: " + service_configuration.dump()};
+    }
+}
+
+auto JSON_Parser::parse_config_completion_time(const nlohmann::json &config_completion_time) -> ConfigCompletionTime
+{
+    try
+    {
+        auto configuration = parse_service_configuration(config_completion_time["configuraiton"]);
+
+        try
+        {
+            return {configuration, parse_time(config_completion_time["completion_time"])};
+        }
+        catch(const nlohmann::detail::out_of_range &)
+        {
+            throw Exception {"No completion time in config completion time: " + config_completion_time.dump()};
+        }
+    }
+    catch(const nlohmann::detail::out_of_range &)
+    {
+        throw Exception {"No configuration in config completion time: " + config_completion_time.dump()};
     }
 }
 

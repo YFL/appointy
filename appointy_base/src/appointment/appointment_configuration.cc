@@ -1,4 +1,4 @@
-#include <appointment_request.h>
+#include <appointment_configuration.h>
 
 #include <json.hpp>
 
@@ -7,7 +7,7 @@ namespace appointy
 
 using json = nlohmann::json;
 
-AppointmentRequest::AppointmentRequest(const Date &first, const Date &last, const Time &from, const Time &until, const ServiceConfiguration &configuration) :
+AppointmentConfiguration::AppointmentConfiguration(const Date &first, const Date &last, const Time &from, const Time &until, const ServiceConfiguration &configuration) :
     first_date {first},
     last_date {last},
     interval_start {from},
@@ -17,7 +17,7 @@ AppointmentRequest::AppointmentRequest(const Date &first, const Date &last, cons
 
 }
 
-auto AppointmentRequest::to_string() const -> std::string
+auto AppointmentConfiguration::to_string() const -> std::string
 {
     auto ret = this->first_date.to_string() + "\n";
     ret += this->last_date.to_string() + "\n";
@@ -33,7 +33,7 @@ auto AppointmentRequest::to_string() const -> std::string
     return ret;
 }
 
-auto AppointmentRequest::to_json() const noexcept -> json
+auto AppointmentConfiguration::to_json() const noexcept -> json
 {
     json j = "{}"_json;
     j["first_date"] = this->first_date.to_json();

@@ -2,11 +2,11 @@
 
 #include <iostream>
 
-#include <mongocxx/client.hpp>
-#include <mongocxx/uri.hpp>
-#include <mongocxx/instance.hpp>
 #include <bsoncxx/builder/stream/document.hpp>
 #include <bsoncxx/json.hpp>
+#include <mongocxx/client.hpp>
+#include <mongocxx/instance.hpp>
+#include <mongocxx/uri.hpp>
 
 #include <appointy_exception.h>
 #include <choice_answer.h>
@@ -107,10 +107,10 @@ auto duration_of_config(const ServiceConfiguration &config, const std::string &c
         }
     }
 
-    return ConfigCompletionTime {config.service_id, config.configuration, add(durations, service.duration)};
+    return ConfigCompletionTime {config, add(durations, service.duration)};
 }
 
-auto accept_appointment_request(const AppointmentRequest &r, const std::string &connection_string, const std::string &db_name) -> std::vector<AppointmentOffer>
+auto offer_appointments(const AppointmentConfiguration &r, const std::string &connection_string, const std::string &db_name) -> std::vector<AppointmentOffer>
 {
     auto uri = mongocxx::uri {connection_string};
     auto client = mongocxx::client {uri};
@@ -123,7 +123,7 @@ auto accept_appointment_request(const AppointmentRequest &r, const std::string &
     }
 
     // collecting the durations
-    auto total_duration = accept_estimated_duration_request({r.service_id, r.answers}, connection_string, db_name);
+    auto total_duration = duration_of_config(r.configuration, connection_string, db_name).completion_time;
     
     if(r.interval_end - r.interval_start < total_duration)
     {
@@ -231,7 +231,7 @@ auto book_appointment(const Appointment &appointment, const std::string &db_conn
 
     mongocxx::collection collection {client[db_name]["Appointments"]};
 
-    auto appointment_offers = accept_appointment_request(appointment.request, db_connection_string, db_name);
+    auto appointment_offers = offer_appointments(appointment.configuration, db_connection_string, db_name);
 
     for(auto &offer : appointment_offers)
     {
@@ -246,38 +246,6 @@ auto book_appointment(const Appointment &appointment, const std::string &db_conn
     }
 
     throw Exception {"Other appointments booked in that time interval"};
-}
-
-auto store_config_completion_time(const ConfigCompletionTime &config_completion_time, const std::string &connection_string, const std::string &db_name) -> bool
-{
-    auto uri = mongocxx::uri {connection_string};
-    auto client = mongocxx::client {uri};
-    auto completion_times_collection = client[db_name]["CompletionTimes"];
-
-    auto builder_part_1 = document {} << "service_id" << config_completion_time.configuration.service_id << "completion_time" << bsoncxx::from_json(config_completion_time.completion_time.to_json().dump());
-    auto builder_part_2 = builder_part_1 << "configuration" << open_array;
-
-    for(auto &answer : config_completion_time.configuration.configuration)
-    {
-        builder_part_2 = builder_part_2 << bsoncxx::from_json(answer->to_json().dump());
-    }
-
-    auto document = builder_part_2 << close_array << finalize;
-    auto result = completion_times_collection.insert_one(document.view());
-    if(result)
-    {
-        return result.value().result().inserted_count() == 1;
-    }
-
-    return false;
-}
-
-auto load_config_completion_times(const ServiceConfiguration &configuration, const std::string &connection_string, const std::string &db_name) -> std::vector<ConfigCompletionTime>
-{
-    auto client = mongocxx::client {mongocxx::uri {connection_string}};
-    auto completion_times_collection = client[db_name]["CompletionTimes"];
-
-    auto cursor = completion_times_collection.find(document {} << )
 }
 
 } // namespace appointy

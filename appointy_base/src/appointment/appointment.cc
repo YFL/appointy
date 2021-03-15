@@ -7,12 +7,12 @@ namespace appointy
 
 using json = nlohmann::json;
 
-Appointment::Appointment(const std::string &id, const Date &d, const Time &start, const Time &end, const AppointmentRequest &request) :
+Appointment::Appointment(const std::string &id, const Date &d, const Time &start, const Time &end, const AppointmentConfiguration &configuration) :
     id {id},
     date {d},
     start {start},
     end {end},
-    request {request}
+    configuration {configuration}
 {
 
 }
@@ -24,7 +24,7 @@ auto Appointment::to_string() const -> std::string
     ret += this->start.to_string() + "\n";
     ret += end.to_string() + "\n";
 
-    return ret + request.to_string(); 
+    return ret + configuration.to_string(); 
 }
 
 auto Appointment::to_json() const noexcept -> json
@@ -34,7 +34,7 @@ auto Appointment::to_json() const noexcept -> json
     j["date"] = this->date.to_json();
     j["start"] = this->start.to_json();
     j["end"] = this->end.to_json();
-    j["request"] = this->request.to_json();
+    j["configuration"] = this->configuration.to_json();
 
     return j;
 }

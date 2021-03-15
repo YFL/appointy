@@ -6,15 +6,17 @@
 #include <answer.h>
 #include <answer_signature.h>
 #include <appointment.h>
-#include <appointment_request.h>
+#include <appointment_configuration.h>
 #include <appointy_exception.h>
 #include <appointy_date.h>
 #include <appointy_time.h>
 #include <choice_answer_signature.h>
+#include <config_completion_time.h>
 #include <numeric_answer_signature.h>
 #include <price.h>
 #include <question.h>
 #include <service.h>
+#include <service_configuration.h>
 
 namespace appointy
 {
@@ -103,8 +105,10 @@ public:
 public:
     static auto parse_answer(const nlohmann::json &answer) -> Answer *;
     static auto parse_choices(const nlohmann::json &choices) -> std::vector<uint32_t>;
-    static auto parse_appointment_request(const nlohmann::json &request) -> AppointmentRequest;
+    static auto parse_appointment_configuration(const nlohmann::json &configuration) -> AppointmentConfiguration;
     static auto parse_appointment(const nlohmann::json &appointment) -> Appointment;
+    static auto parse_service_configuration(const nlohmann::json &service_configuration) -> ServiceConfiguration;
+    static auto parse_config_completion_time(const nlohmann::json &config_completion_time) -> ConfigCompletionTime;
 };
 
 } // namespace appointy

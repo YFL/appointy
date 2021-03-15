@@ -3,7 +3,7 @@
 
 #include <appointy_date.h>
 #include <appointy_time.h>
-#include <appointment_request.h>
+#include <appointment_configuration.h>
 
 namespace appointy
 {
@@ -15,10 +15,10 @@ public:
     const Date date;
     const Time start;
     const Time end;
-    const AppointmentRequest request;
+    const AppointmentConfiguration configuration;
 
 public:
-    Appointment(const std::string &id, const Date &date, const Time &start, const Time &end, const AppointmentRequest &request);
+    Appointment(const std::string &id, const Date &date, const Time &start, const Time &end, const AppointmentConfiguration &configuration);
 
 public:
     auto to_string() const -> std::string;

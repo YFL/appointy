@@ -4,7 +4,7 @@
 
 #include <db_utils.h>
 #include <io_ops.h>
-#include <appointment_request.h>
+#include <appointment_configuration.h>
 #include <json_parser.h>
 #include <request_handling.h>
 
@@ -16,9 +16,9 @@ auto main() -> int
 
     auto services = load_services_from_json("./services_examples_test.json");
 
-    util::set_up_services_collection("mongodb://localhost", "appointy_db");
+    // util::set_up_services_collection("mongodb://localhost", "appointy_db");
 
-    //store_services(services, "mongodb://localhost", "appointy_db");
+    // store_services(services, "mongodb://localhost", "appointy_db");
 
     auto services_loaded = load_services("mongodb://localhost", "appointy_db");
     for(auto &s : services_loaded)
@@ -27,13 +27,13 @@ auto main() -> int
     }
 
     auto appointment_request_str = open_file_to_string("./appointment_request_test5.json");
-    auto appointment_request = JSON_Parser::parse_appointment_request(nlohmann::json::parse(appointment_request_str));
+    auto appointment_request = JSON_Parser::parse_appointment_configuration(nlohmann::json::parse(appointment_request_str));
 
-    auto estimated_duration = accept_estimated_duration_request({appointment_request.service_id, appointment_request.answers}, "mongodb://localhost", "appointy_db");
+    auto estimated_duration = duration_of_config({appointment_request.configuration.service_id, appointment_request.configuration.configuration}, "mongodb://localhost", "appointy_db");
 
     std::cout << estimated_duration.to_json().dump() << std::endl;
 
-    auto appointment_offers = accept_appointment_request(appointment_request, "mongodb://localhost", "appointy_db");
+    auto appointment_offers = offer_appointments(appointment_request, "mongodb://localhost", "appointy_db");
 
     std::cout << "\n\n\nappointment_offers.size(): " << appointment_offers.size() << "[ \n";
     for(auto i = std::vector<AppointmentOffer>::size_type {0}; i < appointment_offers.size(); i++)

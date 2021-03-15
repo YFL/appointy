@@ -1,5 +1,5 @@
 #ifndef _SERVICE_CONFIGURATION_H_
-#define _SERVICE_CONFIGURATIN_H_
+#define _SERVICE_CONFIGURATION_H_
 
 #include <answer.h>
 

@@ -3,7 +3,7 @@
 namespace appointy
 {
 
-ConfigCompletionTime::ConfigCompletionTime(const ServiceConfiguration &config, const Time &completion_time) :
+ConfigCompletionTime::ConfigCompletionTime(const ServiceConfiguration &config, const Time &completion_time) noexcept :
     configuration {config},
     completion_time {completion_time}
 {

@@ -7,13 +7,12 @@ namespace appointy
 
 using json = nlohmann::json;
 
-AppointmentRequest::AppointmentRequest(const Date &first, const Date &last, const Time &from, const Time &until, const std::string &service_id, const std::vector<std::shared_ptr<Answer>> &answers) :
+AppointmentRequest::AppointmentRequest(const Date &first, const Date &last, const Time &from, const Time &until, const ServiceConfiguration &configuration) :
     first_date {first},
     last_date {last},
     interval_start {from},
     interval_end {until},
-    service_id {service_id},
-    answers {answers}
+    configuration {configuration}
 {
 
 }
@@ -24,9 +23,9 @@ auto AppointmentRequest::to_string() const -> std::string
     ret += this->last_date.to_string() + "\n";
     ret += this->interval_start.to_string() + "\n";
     ret += this->interval_end.to_string() + "\n";
-    ret += this->service_id + "\n";
+    ret += this->configuration.service_id + "\n";
     
-    for(auto &a : this->answers)
+    for(auto &a : this->configuration.configuration)
     {
         ret += a->to_string() + "\n"; 
     }
@@ -41,12 +40,7 @@ auto AppointmentRequest::to_json() const noexcept -> json
     j["last_date"] = this->last_date.to_json();
     j["interval_start"] = this->interval_start.to_json();
     j["interval_end"] = this->interval_end.to_json();
-    j["service_id"] = this->service_id;
-    auto &json_answers = j["answers"] = "[]"_json;
-    for(auto &a : answers)
-    {
-        json_answers.push_back(a->to_json());
-    }
+    j["configuration"] = this->configuration.to_json();
 
     return j;
 }

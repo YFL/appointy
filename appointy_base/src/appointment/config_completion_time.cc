@@ -14,6 +14,7 @@ auto ConfigCompletionTime::to_json() const noexcept -> nlohmann::json
 {
     auto json = "{}"_json;
     json["configuration"] = configuration.to_json();
+    json["completion_time"] = completion_time.to_json();
 
     return json;
 }

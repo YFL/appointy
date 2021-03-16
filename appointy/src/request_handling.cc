@@ -163,7 +163,7 @@ auto offer_appointments(const AppointmentConfiguration &r, const std::string &co
     
     if(appointments.empty())
     {
-        int days = r.last_date.days_in_year() - r.first_date.days_in_year();
+        int days = r.last_date.days_in_year() - r.first_date.days_in_year() + 1;
         gaps.push_back(AppointmentOffer {r.first_date, r.interval_start, r.interval_end - r.interval_start, r});
         for(int i = 1; i < days; i++)
         {

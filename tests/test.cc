@@ -26,12 +26,12 @@ auto main() -> int
         std::cout << s.to_json().dump() << std::endl;
     }
 
-    auto appointment_request_str = open_file_to_string("./appointment_request_test5.json");
+    auto appointment_request_str = open_file_to_string("./appointment_configuration_test_2.json");
     auto appointment_request = JSON_Parser::parse_appointment_configuration(nlohmann::json::parse(appointment_request_str));
 
-    auto estimated_duration = duration_of_config({appointment_request.configuration.service_id, appointment_request.configuration.configuration}, "mongodb://localhost", "appointy_db");
+    auto estimated_duration = duration_of_config(appointment_request.configuration, "mongodb://localhost", "appointy_db");
 
-    std::cout << estimated_duration.to_json().dump() << std::endl;
+    std::cout << "estimated duration: " << estimated_duration.to_json().dump() << std::endl;
 
     auto appointment_offers = offer_appointments(appointment_request, "mongodb://localhost", "appointy_db");
 
@@ -47,7 +47,7 @@ auto main() -> int
     }
     std::cout << "]" << std::endl;
 
-    auto appointment = JSON_Parser::parse_appointment(nlohmann::json::parse(open_file_to_string("./appointment_test4.json")));
+    auto appointment = JSON_Parser::parse_appointment(nlohmann::json::parse(open_file_to_string("./appointment_test_2.json")));
 
     std::cout << book_appointment(appointment, "mongodb://localhost", "appointy_db") << std::endl;
 

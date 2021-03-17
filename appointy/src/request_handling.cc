@@ -10,6 +10,7 @@
 
 #include <appointy_exception.h>
 #include <choice_answer.h>
+#include <io_ops.h>
 #include <json_parser.h>
 #include <numeric_answer.h>
 
@@ -23,15 +24,15 @@ using bsoncxx::builder::stream::close_array;
 using bsoncxx::builder::stream::document;
 using bsoncxx::builder::stream::finalize;
 
-template <typename Collection, typename T>
-auto add(Collection collection, const T &init)
+template <template<class, class> class Collection, typename T, typename Allocator>
+auto add(const Collection<T, Allocator> &collection, const T &init)
 {
     if(collection.begin() == collection.end())
     {
         return init;
     }
     T begin = *collection.begin();
-    Collection new_collection {collection.begin() + 1, collection.end()};
+    Collection<T, Allocator> new_collection {collection.begin() + 1, collection.end()};
 
     return add(new_collection, init + begin);
 }
@@ -53,7 +54,7 @@ auto get_service_from_db(const std::string &service_id, const std::string &conne
     return JSON_Parser::parse_service(nlohmann::json::parse(bsoncxx::to_json(service_doc_optional.value().view())));
 }
 
-auto duration_of_config(const ServiceConfiguration &config, const std::string &connection_string, const std::string &db_name) -> ConfigCompletionTime
+auto compute_estimated_duration_of_config(const ServiceConfiguration &config, const std::string &connection_string, const std::string &db_name) -> ConfigCompletionTime
 {
     auto service = get_service_from_db(config.service_id, connection_string, db_name);
 
@@ -107,7 +108,29 @@ auto duration_of_config(const ServiceConfiguration &config, const std::string &c
         }
     }
 
-    return ConfigCompletionTime {config, add(durations, service.duration)};
+    auto config_duration = add(durations, service.duration);
+
+    auto completion_times = load_config_completion_times(config, connection_string, db_name);
+    
+    if(completion_times.size())
+    {
+        auto sum = long {config_duration.to_seconds()};
+        for(auto &completion_time : completion_times)
+        {
+            sum += completion_time.completion_time.to_seconds();
+        }
+
+        auto total_seconds = sum / (completion_times.size() + 1);
+
+        auto minutes = static_cast<int>(total_seconds / 60);
+        auto seconds = static_cast<int>(total_seconds % 60);
+        auto hours = static_cast<int>(minutes / 60);
+        minutes = minutes % 60;
+
+        return ConfigCompletionTime {config, {hours, minutes, seconds}};
+    }
+
+    return ConfigCompletionTime {config, config_duration};
 }
 
 auto offer_appointments(const AppointmentConfiguration &r, const std::string &connection_string, const std::string &db_name) -> std::vector<AppointmentOffer>
@@ -122,9 +145,8 @@ auto offer_appointments(const AppointmentConfiguration &r, const std::string &co
         throw Exception {"The interval's start is bigger then it's end"};
     }
 
-    // collecting the durations
-    auto total_duration = duration_of_config(r.configuration, connection_string, db_name).completion_time;
-    
+    auto total_duration = compute_estimated_duration_of_config(r.configuration, connection_string, db_name).completion_time;
+
     if(r.interval_end - r.interval_start < total_duration)
     {
         throw Exception {"The requested interval is smaller then the completion time of this configuration"};

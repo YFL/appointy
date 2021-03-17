@@ -26,14 +26,16 @@ auto main() -> int
         std::cout << s.to_json().dump() << std::endl;
     }
 
-    auto appointment_request_str = open_file_to_string("./appointment_configuration_test_2.json");
-    auto appointment_request = JSON_Parser::parse_appointment_configuration(nlohmann::json::parse(appointment_request_str));
+    auto appointment_config_str = open_file_to_string("./appointment_configuration_test_2.json");
+    auto appointment_config = JSON_Parser::parse_appointment_configuration(nlohmann::json::parse(appointment_config_str));
 
-    auto estimated_duration = duration_of_config(appointment_request.configuration, "mongodb://localhost", "appointy_db");
+    std::cout << "An answer: " << appointment_config.configuration.configuration.front()->to_json().dump()  << "\n\n" << std::endl;
+
+    auto estimated_duration = compute_estimated_duration_of_config(appointment_config.configuration, "mongodb://localhost", "appointy_db");
 
     std::cout << "estimated duration: " << estimated_duration.to_json().dump() << std::endl;
 
-    auto appointment_offers = offer_appointments(appointment_request, "mongodb://localhost", "appointy_db");
+    auto appointment_offers = offer_appointments(appointment_config, "mongodb://localhost", "appointy_db");
 
     std::cout << "\n\n\nappointment_offers.size(): " << appointment_offers.size() << "[ \n";
     for(auto i = std::vector<AppointmentOffer>::size_type {0}; i < appointment_offers.size(); i++)
@@ -49,7 +51,18 @@ auto main() -> int
 
     auto appointment = JSON_Parser::parse_appointment(nlohmann::json::parse(open_file_to_string("./appointment_test_2.json")));
 
-    std::cout << book_appointment(appointment, "mongodb://localhost", "appointy_db") << std::endl;
+    // std::cout << book_appointment(appointment, "mongodb://localhost", "appointy_db") << std::endl;
+
+    auto config_completion_time = ConfigCompletionTime {appointment.configuration.configuration, {1,32,0}};
+
+    store_config_completion_time(config_completion_time, "mongodb://localhost", "appointy_db");
+
+    auto completion_times = load_config_completion_times(appointment.configuration.configuration, "mongodb://localhost", "appointy_db");
+    std::cout << "completion_times.size(): " << completion_times.size();
+    for(auto &completion_time : completion_times)
+    {
+        std::cout << "\n\n\n" << completion_time.to_json().dump() << std::endl;
+    }
 
     return 0;
 }

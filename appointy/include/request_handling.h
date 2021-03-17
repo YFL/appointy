@@ -11,7 +11,7 @@
 namespace appointy
 {
 
-auto duration_of_config(const ServiceConfiguration &config, const std::string &connection_string, const std::string &db_name) -> ConfigCompletionTime;
+auto compute_estimated_duration_of_config(const ServiceConfiguration &config, const std::string &connection_string, const std::string &db_name) -> ConfigCompletionTime;
 
 auto offer_appointments(const AppointmentConfiguration &configuration, const std::string &connection_string, const std::string &db_name) -> std::vector<AppointmentOffer>;
 

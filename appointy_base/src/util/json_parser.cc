@@ -534,7 +534,7 @@ auto JSON_Parser::parse_config_completion_time(const nlohmann::json &config_comp
 {
     try
     {
-        auto configuration = parse_service_configuration(config_completion_time["configuraiton"]);
+        auto configuration = parse_service_configuration(config_completion_time["configuration"]);
 
         try
         {

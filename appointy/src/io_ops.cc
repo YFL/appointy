@@ -115,22 +115,15 @@ auto store_config_completion_time(const ConfigCompletionTime &config_completion_
     using bsoncxx::builder::stream::document;
     using bsoncxx::builder::stream::open_array;
     using bsoncxx::builder::stream::close_array;
+    using bsoncxx::builder::stream::open_document;
+    using bsoncxx::builder::stream::close_document;
     using bsoncxx::builder::stream::finalize;
 
     auto uri = mongocxx::uri {connection_string};
     auto client = mongocxx::client {uri};
     auto completion_times_collection = client[db_name]["CompletionTimes"];
 
-    auto builder_part_1 = document {} << "service_id" << config_completion_time.configuration.service_id << "completion_time" << bsoncxx::from_json(config_completion_time.completion_time.to_json().dump());
-    auto builder_part_2 = builder_part_1 << "configuration" << open_array;
-
-    for(auto &answer : config_completion_time.configuration.configuration)
-    {
-        builder_part_2 = builder_part_2 << bsoncxx::from_json(answer->to_json().dump());
-    }
-
-    auto document = builder_part_2 << close_array << finalize;
-    auto result = completion_times_collection.insert_one(document.view());
+    auto result = completion_times_collection.insert_one(bsoncxx::from_json(config_completion_time.to_json().dump()));
     if(result)
     {
         return result.value().result().inserted_count() == 1;
@@ -149,17 +142,10 @@ auto load_config_completion_times(const ServiceConfiguration &configuration, con
     auto client = mongocxx::client {mongocxx::uri {connection_string}};
     auto completion_times_collection = client[db_name]["CompletionTimes"];
 
-    auto document_builder = document {} << "service_id" << configuration.service_id << "configuration" << open_array;
-
-    for(auto &answer : configuration.configuration)
-    {
-        document_builder = document_builder << bsoncxx::from_json(answer->to_json().dump());
-    }
-
-    auto filter = document_builder << close_array << finalize;
+    auto filter = document {} << "configuration" << bsoncxx::from_json(configuration.to_json().dump()) << finalize;
 
     auto cursor = completion_times_collection.find(filter.view());
-    
+
     try
     {
         auto completion_times = std::vector<ConfigCompletionTime> {};
@@ -170,9 +156,9 @@ auto load_config_completion_times(const ServiceConfiguration &configuration, con
 
         return completion_times;
     }
-    catch(const mongocxx::query_exception &)
+    catch(const mongocxx::query_exception &e)
     {
-        return {};
+        throw Exception {e.what()};
     }
 }
 

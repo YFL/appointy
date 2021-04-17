@@ -17,6 +17,8 @@ auto offer_appointments(const AppointmentConfiguration &configuration, const std
 
 auto book_appointment(const Appointment &appointment, const std::string &db_connection_string, const std::string &db_name) -> bool;
 
+auto list_appointments(const Date &start_date, const Date &end_date, const Time &from, const Time &until, const std::string &db_connection_string, const std::string &db_name) -> std::vector<Appointment>;
+
 } // namespace appointy
 
 #endif // _REQUEST_HANDLING_H_

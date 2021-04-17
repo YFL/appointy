@@ -6,6 +6,7 @@
 #include <bsoncxx/json.hpp>
 #include <mongocxx/client.hpp>
 #include <mongocxx/instance.hpp>
+#include <mongocxx/exception/query_exception.hpp>
 #include <mongocxx/uri.hpp>
 
 #include <appointy_exception.h>
@@ -268,6 +269,45 @@ auto book_appointment(const Appointment &appointment, const std::string &db_conn
     }
 
     throw Exception {"Other appointments booked in that time interval"};
+}
+
+auto list_appointments(const Date &start_date, const Date &end_date, const Time &from, const Time &until, const std::string &db_connection_string, const std::string &db_name) -> std::vector<Appointment>
+{
+    auto client = mongocxx::client {mongocxx::uri {db_connection_string}};
+    auto appointments_collection = client[db_name]["Appointments"];
+
+    auto doc = document {};
+    auto filter = doc << "$and" << open_array
+        << open_document << "date"
+            << open_document
+                << "$gte" << start_date.date()
+                << "$lte" << end_date.date()
+            << close_document
+        << close_document
+        << open_document << "start"
+            << open_document
+                << "$gte" << from.time()
+                << "$lte" << until.time()
+            << close_document
+        << close_document
+    << close_array << finalize;
+
+    auto cursor = appointments_collection.find(filter.view());
+
+    try
+    {
+        std::vector<Appointment> ret;
+        for(auto it = cursor.begin(); it != cursor.end(); it++)
+        {
+            ret.push_back(JSON_Parser::parse_appointment(nlohmann::json::parse(bsoncxx::to_json(*it))));
+        }
+
+        return ret;
+    }
+    catch(const mongocxx::query_exception &e)
+    {
+        throw Exception {std::string {"An error occurred while fetching the appointments from the database: "} + e.what()};
+    }
 }
 
 } // namespace appointy

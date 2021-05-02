@@ -14,14 +14,15 @@ auto main() -> int
 
     auto instance = mongocxx::instance {};
 
-    /* auto appointments = list_appointments({2021, 3, 17}, {2021, 3, 17}, {8, 0, 0}, {20, 0, 0}, "mongodb://localhost", "appointy_db");
+    auto appointments = list_appointments({2021, 3, 17}, {2021, 3, 17}, {8, 0, 0}, {20, 0, 0}, "mongodb://localhost", "appointy_db");
 
     for(auto &a : appointments)
     {
-        std::cout << a.to_json().dump() << std::endl;
+        auto detail = get_appointment_details(a, "mongodb://localhost", "appointy_db");
+        std::cout << detail.to_json().dump() << std::endl;
     }
 
-    return 0; */
+    return 0;
 
     auto services = load_services_from_json("./services_examples_test.json");
 

@@ -39,3 +39,4 @@ Makefile
 dummy_appointments_inserts
 dummy_appointments_values
 appointy_db.sqbpro
+Doxyfile

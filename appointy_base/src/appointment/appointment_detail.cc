@@ -17,7 +17,7 @@ auto AppointmentDetail::to_json() const noexcept -> nlohmann::json
     json["service_id"] = service_id;
     json["service_name"] = service_name;
     json["configuration_data"] = "{}"_json;
-    auto conf_data = json["configuration_data"];
+    auto &conf_data = json["configuration_data"];
     for(auto &p : configuration_data)
     {
         if(p.second.index() == 0)

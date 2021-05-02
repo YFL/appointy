@@ -30,7 +30,10 @@ auto Appointment::to_string() const -> std::string
 auto Appointment::to_json() const noexcept -> json
 {
     json j = "{}"_json;
-    j["id"] = this->id;
+    if(!id.empty())
+    {
+        j["id"] = this->id;
+    }
     j["date"] = this->date.to_json();
     j["start"] = this->start.to_json();
     j["end"] = this->end.to_json();

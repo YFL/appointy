@@ -14,6 +14,19 @@ auto main() -> int
 
     auto instance = mongocxx::instance {};
 
+    auto appointments = list_appointments({2021, 3, 17}, {2021, 3, 17}, {8, 0, 0}, {20, 0, 0}, "mongodb://localhost", "appointy_db");
+
+    for(auto &a : appointments)
+    {
+        std::cout << "appointment id: " << a.id << std::endl;
+        auto detail = get_appointment_details(a, "mongodb://localhost", "appointy_db");
+        std::cout << detail.to_json().dump() << std::endl;
+    }
+
+    update_appointment("608ecace1a338e6f9f4474cb", JSON_Parser::parse_appointment(nlohmann::json::parse(open_file_to_string("./appointment_update_test_1.json"))),"mongodb://localhost", "appointy_db");
+
+    return 0;
+
     auto services = load_services_from_json("./services_examples_test.json");
 
     // util::set_up_services_collection("mongodb://localhost", "appointy_db");
@@ -49,9 +62,9 @@ auto main() -> int
     }
     std::cout << "]" << std::endl;
 
-    auto appointment = JSON_Parser::parse_appointment(nlohmann::json::parse(open_file_to_string("./appointment_test_2.json")));
+    auto appointment = JSON_Parser::parse_appointment(nlohmann::json::parse(open_file_to_string("./appointment_test_1.json")));
 
-    // std::cout << book_appointment(appointment, "mongodb://localhost", "appointy_db") << std::endl;
+    std::cout << book_appointment(appointment, "mongodb://localhost", "appointy_db") << std::endl;
 
     auto config_completion_time = ConfigCompletionTime {appointment.configuration.configuration, {1,32,0}};
 

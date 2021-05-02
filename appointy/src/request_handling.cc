@@ -5,8 +5,9 @@
 #include <bsoncxx/builder/stream/document.hpp>
 #include <bsoncxx/json.hpp>
 #include <mongocxx/client.hpp>
-#include <mongocxx/instance.hpp>
 #include <mongocxx/exception/query_exception.hpp>
+#include <mongocxx/instance.hpp>
+#include <mongocxx/options/replace.hpp>
 #include <mongocxx/uri.hpp>
 
 #include <appointy_exception.h>
@@ -382,6 +383,28 @@ auto remove_appointment(const std::string &appointment_id, const std::string &db
     if(!appointment)
     {
         throw Exception {"The appointment hasn't been found by the id " + appointment_id};
+    }
+}
+
+auto update_appointment(const std::string &appointment_id, const Appointment &new_appointment, const std::string &db_connection_string, const std::string &db_name) -> void
+{
+    auto client = mongocxx::client {mongocxx::uri {db_connection_string}};
+    auto appointments_collection = client[db_name]["Appointments"];
+
+    auto doc = document {};
+    auto filter = doc << "_id" << bsoncxx::oid {appointment_id} << finalize;
+    auto replaced = appointments_collection.replace_one(filter.view(), bsoncxx::from_json(new_appointment.to_json().dump()));
+    
+    if(replaced)
+    {
+        if(replaced.value().modified_count() != 1)
+        {
+            throw Exception {"The number of modified documents isn't equal to one: " + std::to_string(replaced.value().modified_count())};
+        }
+    }
+    else
+    {
+        throw Exception {"Some error occurred while attempting to update the document"};
     }
 }
 

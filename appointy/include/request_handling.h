@@ -24,6 +24,8 @@ auto get_appointment_details(const Appointment &appointment, const std::string &
 
 auto remove_appointment(const std::string &appointment_id, const std::string &db_connection_string, const std::string &db_name) -> void;
 
+auto update_appointment(const std::string &appointment_id, const Appointment &new_appointment, const std::string &db_connection_string, const std::string &db_name) -> void;
+
 } // namespace appointy
 
 #endif // _REQUEST_HANDLING_H_

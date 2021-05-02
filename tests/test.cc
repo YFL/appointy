@@ -18,11 +18,12 @@ auto main() -> int
 
     for(auto &a : appointments)
     {
+        std::cout << "appointment id: " << a.id << std::endl;
         auto detail = get_appointment_details(a, "mongodb://localhost", "appointy_db");
         std::cout << detail.to_json().dump() << std::endl;
     }
 
-    remove_appointment(appointments[0].id, "mongodb://localhost", "appointy_db");
+    update_appointment("608ecace1a338e6f9f4474cb", JSON_Parser::parse_appointment(nlohmann::json::parse(open_file_to_string("./appointment_update_test_1.json"))),"mongodb://localhost", "appointy_db");
 
     return 0;
 

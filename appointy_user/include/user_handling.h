@@ -3,16 +3,12 @@
 
 #include <appointment.h>
 
-#include <user.h>
-
 namespace appointy
 {
     
-auto register_user(const User &user, const std::string &password, const std::string &connection_string, const std::string &db_name) noexcept -> bool;
+auto generate_user(const std::string &connection_string, const std::string &db_name) -> std::string;
 
-auto verify_password(const std::string &username, const std::string &password, const std::string &connection_string, const std::string &db_name) -> bool;
-
-auto link_appointment_to_user(const Appointment &appointment, const std::string &user_id) -> bool;
+auto link_appointment_to_user(const std::string &appointment_id, const std::string &user_id, const std::string &db_connection_string, const std::string &db_name) -> void;
 
 auto n_most_frequent_appointments(const std::string &user_id, uint32_t n, const std::string &connection_string, const std::string &db_name) -> std::vector<Appointment>;
 

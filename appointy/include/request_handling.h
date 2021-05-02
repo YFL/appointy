@@ -22,6 +22,8 @@ auto list_appointments(const Date &start_date, const Date &end_date, const Time 
 
 auto get_appointment_details(const Appointment &appointment, const std::string &db_connection_string, const std::string &db_name) -> AppointmentDetail;
 
+auto remove_appointment(const std::string &appointment_id, const std::string &db_connection_string, const std::string &db_name) -> void;
+
 } // namespace appointy
 
 #endif // _REQUEST_HANDLING_H_

@@ -370,4 +370,19 @@ auto get_appointment_details(const Appointment &appointment, const std::string &
     return AppointmentDetail {service.id, service.name, config_data};
 }
 
+auto remove_appointment(const std::string &appointment_id, const std::string &db_connection_string, const std::string &db_name) -> void
+{
+    auto client = mongocxx::client {mongocxx::uri {db_connection_string}};
+    auto appointments_collection = client[db_name]["Appointments"];
+
+    auto doc = document {};
+    auto filter = doc << "_id" << bsoncxx::oid {appointment_id} << finalize;
+
+    auto appointment = appointments_collection.find_one_and_delete(filter.view());
+    if(!appointment)
+    {
+        throw Exception {"The appointment hasn't been found by the id " + appointment_id};
+    }
+}
+
 } // namespace appointy

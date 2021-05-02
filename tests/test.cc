@@ -22,6 +22,8 @@ auto main() -> int
         std::cout << detail.to_json().dump() << std::endl;
     }
 
+    remove_appointment(appointments[0].id, "mongodb://localhost", "appointy_db");
+
     return 0;
 
     auto services = load_services_from_json("./services_examples_test.json");
@@ -59,9 +61,9 @@ auto main() -> int
     }
     std::cout << "]" << std::endl;
 
-    auto appointment = JSON_Parser::parse_appointment(nlohmann::json::parse(open_file_to_string("./appointment_test_2.json")));
+    auto appointment = JSON_Parser::parse_appointment(nlohmann::json::parse(open_file_to_string("./appointment_test_1.json")));
 
-    // std::cout << book_appointment(appointment, "mongodb://localhost", "appointy_db") << std::endl;
+    std::cout << book_appointment(appointment, "mongodb://localhost", "appointy_db") << std::endl;
 
     auto config_completion_time = ConfigCompletionTime {appointment.configuration.configuration, {1,32,0}};
 

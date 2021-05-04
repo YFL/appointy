@@ -21,11 +21,13 @@ project "test"
     libdirs
     {
         "../build/appointy_base/%{cfg.longname}/bin/",
-        "../build/appointy/%{cfg.longname}/bin/"
+        "../build/appointy/%{cfg.longname}/bin/",
+        "../build/appointy_user/%{cfg.longname}/bin/"
     }
     links
     {
         "appointy_base",
         "appointy",
+        "appointy_user",
         "mongocxx"
     }

@@ -16,7 +16,11 @@ auto compute_estimated_duration_of_config(const ServiceConfiguration &config, co
 
 auto offer_appointments(const AppointmentConfiguration &configuration, const std::string &connection_string, const std::string &services_db_name, const std::string &appointments_db_name) -> std::vector<AppointmentOffer>;
 
-auto book_appointment(const Appointment &appointment, const std::string &db_connection_string, const std::string &services_db_name, const std::string &appointments_db_name) -> bool;
+/**
+ * @return The id of the inserted appointment
+ * @throw appointy::Exception - if there's already an appointment booked to that date and time or when the insertion failed
+ */
+auto book_appointment(const Appointment &appointment, const std::string &db_connection_string, const std::string &services_db_name, const std::string &appointments_db_name) -> std::string;
 
 auto list_appointments(const Date &start_date, const Date &end_date, const Time &from, const Time &until, const std::string &db_connection_string, const std::string &appointments_db_name) -> std::vector<Appointment>;
 

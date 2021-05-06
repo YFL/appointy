@@ -296,12 +296,11 @@ auto offer_appointments(const AppointmentConfiguration &r, const std::string &co
     return gaps;
 }
 
-auto book_appointment(const Appointment &appointment, const std::string &db_connection_string, const std::string &services_db_name, const std::string &appointments_db_name) -> bool
+auto book_appointment(const Appointment &appointment, const std::string &db_connection_string, const std::string &services_db_name, const std::string &appointments_db_name) -> std::string
 {
-    mongocxx::uri uri {db_connection_string};
-    mongocxx::client client {uri};
+    auto client = mongocxx::client {mongocxx::uri {db_connection_string}};
 
-    mongocxx::collection appointments_collection {client[appointments_db_name]["Appointments"]};
+    auto appointments_collection = client[appointments_db_name]["Appointments"];
 
     auto appointment_offers = offer_appointments(appointment.configuration, db_connection_string, services_db_name, appointments_db_name);
 
@@ -313,7 +312,12 @@ auto book_appointment(const Appointment &appointment, const std::string &db_conn
 
             auto result = appointments_collection.insert_one(document);
 
-            return result.value().result().inserted_count() == 1 ? true : false;
+            if(result)
+            {
+                return result.value().inserted_id().get_oid().value.to_string();
+            }
+
+            throw Exception {"The insertion of the appointment failed"};
         }
     }
 

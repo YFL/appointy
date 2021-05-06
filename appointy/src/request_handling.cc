@@ -183,19 +183,19 @@ auto compute_estimated_duration_of_config(const ServiceConfiguration &config, co
     return ConfigCompletionTime {config, config_duration};
 }
 
-auto offer_appointments(const AppointmentConfiguration &r, const std::string &connection_string, const std::string &db_name) -> std::vector<AppointmentOffer>
+auto offer_appointments(const AppointmentConfiguration &r, const std::string &connection_string, const std::string &services_db_name, const std::string &appointments_db_name) -> std::vector<AppointmentOffer>
 {
     auto uri = mongocxx::uri {connection_string};
     auto client = mongocxx::client {uri};
-    auto services_collection = client[db_name]["Services"];
-    auto appointments_collection = client[db_name]["Appointments"];
+    auto services_collection = client[services_db_name]["Services"];
+    auto appointments_collection = client[appointments_db_name]["Appointments"];
 
     if(r.interval_start > r.interval_end)
     {
         throw Exception {"The interval's start is bigger then it's end"};
     }
 
-    auto total_duration = compute_estimated_duration_of_config(r.configuration, connection_string, db_name).completion_time;
+    auto total_duration = compute_estimated_duration_of_config(r.configuration, connection_string, services_db_name).completion_time;
 
     if(r.interval_end - r.interval_start < total_duration)
     {
@@ -296,14 +296,14 @@ auto offer_appointments(const AppointmentConfiguration &r, const std::string &co
     return gaps;
 }
 
-auto book_appointment(const Appointment &appointment, const std::string &db_connection_string, const std::string &db_name) -> bool
+auto book_appointment(const Appointment &appointment, const std::string &db_connection_string, const std::string &services_db_name, const std::string &appointments_db_name) -> bool
 {
     mongocxx::uri uri {db_connection_string};
     mongocxx::client client {uri};
 
-    mongocxx::collection collection {client[db_name]["Appointments"]};
+    mongocxx::collection appointments_collection {client[appointments_db_name]["Appointments"]};
 
-    auto appointment_offers = offer_appointments(appointment.configuration, db_connection_string, db_name);
+    auto appointment_offers = offer_appointments(appointment.configuration, db_connection_string, services_db_name, appointments_db_name);
 
     for(auto &offer : appointment_offers)
     {
@@ -311,7 +311,7 @@ auto book_appointment(const Appointment &appointment, const std::string &db_conn
         {
             bsoncxx::document::view_or_value document {bsoncxx::from_json(appointment.to_json().dump())};
 
-            auto result = collection.insert_one(document);
+            auto result = appointments_collection.insert_one(document);
 
             return result.value().result().inserted_count() == 1 ? true : false;
         }
@@ -320,10 +320,10 @@ auto book_appointment(const Appointment &appointment, const std::string &db_conn
     throw Exception {"Other appointments booked in that time interval"};
 }
 
-auto list_appointments(const Date &start_date, const Date &end_date, const Time &from, const Time &until, const std::string &db_connection_string, const std::string &db_name) -> std::vector<Appointment>
+auto list_appointments(const Date &start_date, const Date &end_date, const Time &from, const Time &until, const std::string &db_connection_string, const std::string &appointments_db_name) -> std::vector<Appointment>
 {
     auto client = mongocxx::client {mongocxx::uri {db_connection_string}};
-    auto appointments_collection = client[db_name]["Appointments"];
+    auto appointments_collection = client[appointments_db_name]["Appointments"];
 
     auto doc = document {};
     auto filter = doc << "$and" << open_array
@@ -359,9 +359,9 @@ auto list_appointments(const Date &start_date, const Date &end_date, const Time 
     }
 }
 
-auto get_appointment_details(const Appointment &appointment, const std::string &db_connection_string, const std::string &db_name) -> AppointmentDetail
+auto get_appointment_details(const Appointment &appointment, const std::string &db_connection_string, const std::string &services_db_name) -> AppointmentDetail
 {
-    auto service = get_service_from_db(appointment.configuration.configuration.service_id, db_connection_string, db_name);
+    auto service = get_service_from_db(appointment.configuration.configuration.service_id, db_connection_string, services_db_name);
 
     auto config_data = std::vector<std::pair<std::string, std::variant<std::vector<std::string>, int, double>>> {};
     config_data.reserve(appointment.configuration.configuration.configuration.size());
@@ -371,10 +371,10 @@ auto get_appointment_details(const Appointment &appointment, const std::string &
     return AppointmentDetail {service.id, service.name, config_data};
 }
 
-auto remove_appointment(const std::string &appointment_id, const std::string &db_connection_string, const std::string &db_name) -> void
+auto remove_appointment(const std::string &appointment_id, const std::string &db_connection_string, const std::string &appointments_db_name) -> void
 {
     auto client = mongocxx::client {mongocxx::uri {db_connection_string}};
-    auto appointments_collection = client[db_name]["Appointments"];
+    auto appointments_collection = client[appointments_db_name]["Appointments"];
 
     auto doc = document {};
     auto filter = doc << "_id" << bsoncxx::oid {appointment_id} << finalize;
@@ -386,10 +386,10 @@ auto remove_appointment(const std::string &appointment_id, const std::string &db
     }
 }
 
-auto update_appointment(const std::string &appointment_id, const Appointment &new_appointment, const std::string &db_connection_string, const std::string &db_name) -> void
+auto update_appointment(const std::string &appointment_id, const Appointment &new_appointment, const std::string &db_connection_string, const std::string &appointments_db_name) -> void
 {
     auto client = mongocxx::client {mongocxx::uri {db_connection_string}};
-    auto appointments_collection = client[db_name]["Appointments"];
+    auto appointments_collection = client[appointments_db_name]["Appointments"];
 
     auto doc = document {};
     auto filter = doc << "_id" << bsoncxx::oid {appointment_id} << finalize;

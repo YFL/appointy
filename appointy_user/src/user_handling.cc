@@ -12,10 +12,10 @@
 namespace appointy
 {
 
-auto generate_user(const std::string &db_connection_string, const std::string &db_name) -> std::string
+auto generate_user(const std::string &db_connection_string, const std::string &users_db_name) -> std::string
 {
     auto client = mongocxx::client {mongocxx::uri {db_connection_string}};
-    auto users_collection = client[db_name]["Users"];
+    auto users_collection = client[users_db_name]["Users"];
 
     auto result = users_collection.insert_one({});
 
@@ -27,10 +27,10 @@ auto generate_user(const std::string &db_connection_string, const std::string &d
     throw Exception {"Some error occurred while generating a new user"};
 }
 
-auto link_appointment_to_user(const std::string &appointment_id, const std::string &user_id, const std::string &db_connection_string, const std::string &db_name) -> void
+auto link_appointment_to_user(const std::string &appointment_id, const std::string &user_id, const std::string &db_connection_string, const std::string &users_appointments_db_name) -> void
 {
     auto client = mongocxx::client {mongocxx::uri {db_connection_string}};
-    auto users_appointments_collection = client[db_name]["Users_Appointments"];
+    auto users_appointments_collection = client[users_appointments_db_name]["Users_Appointments"];
 
     auto doc = bsoncxx::builder::stream::document {} << "user" << bsoncxx::oid {user_id} << "appointment" << bsoncxx::oid {appointment_id} << bsoncxx::builder::stream::finalize;
 
@@ -44,11 +44,11 @@ auto link_appointment_to_user(const std::string &appointment_id, const std::stri
     }
 }
 
-auto list_user_appointments(const std::string &user_id, const std::string &db_connection_string, const std::string &db_name) -> std::vector<Appointment>
+auto list_user_appointments(const std::string &user_id, const std::string &db_connection_string, const std::string &appointments_db_name, const std::string &users_appointments_db_name) -> std::vector<Appointment>
 {
     auto client = mongocxx::client {mongocxx::uri {db_connection_string}};
-    auto users_appointments_collection = client[db_name]["Users_Appointments"];
-    auto appointments_collection = client[db_name]["Appointments"];
+    auto users_appointments_collection = client[users_appointments_db_name]["Users_Appointments"];
+    auto appointments_collection = client[appointments_db_name]["Appointments"];
 
     auto doc = bsoncxx::builder::stream::document {};
     auto filter = doc << "user" << bsoncxx::oid {user_id} << bsoncxx::builder::stream::finalize;

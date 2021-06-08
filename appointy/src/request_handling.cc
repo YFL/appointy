@@ -195,7 +195,7 @@ auto offer_appointments(const AppointmentConfiguration &r, const std::string &co
         throw Exception {"The interval's start is bigger then it's end"};
     }
 
-    auto total_duration = compute_estimated_duration_of_config(r.configuration, connection_string, services_db_name).completion_time;
+    auto total_duration = compute_estimated_duration_of_config(r.configuration, connection_string, services_db_name, services_db_name).completion_time;
 
     if(r.interval_end - r.interval_start < total_duration)
     {

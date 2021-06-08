@@ -11,6 +11,7 @@ project "test"
         "/usr/include/bsoncxx/v_noabi",
         "../appointy/include/",
         "../appointy_base/include/**",
+        "../appointy_user/include/",
         "../ext/json/include",
         "../ext/json/include/nlohmann"
     }

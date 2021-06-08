@@ -7,6 +7,7 @@
 #include <appointment_configuration.h>
 #include <json_parser.h>
 #include <request_handling.h>
+#include <user_handling.h>
 
 auto main() -> int
 {
@@ -24,6 +25,20 @@ auto main() -> int
     }
 
     update_appointment("608ecace1a338e6f9f4474cb", JSON_Parser::parse_appointment(nlohmann::json::parse(open_file_to_string("./appointment_update_test_1.json"))),"mongodb://localhost", "appointy_db");
+
+    auto user = generate_user("mongodb://localhost", "appointy_users_db");
+
+    std::cout << "newly generated user's name: " << user << std::endl;
+
+    link_appointment_to_user("608ecace1a338e6f9f4474cb", user, "mongodb://localhost/", "appointy_users_appointments_db");
+
+    auto users_appointments = list_user_appointments(user, "mongodb://localhost/", "appointy_db", "appointy_users_appointments_db");
+
+    std::cout << "User " << user << "'s appointments:\n";
+    for(auto &ua : users_appointments)
+    {
+        std::cout << get_appointment_details(ua, "mongodb://localhost", "appointy_db").to_json().dump() << std::endl;
+    }
 
     return 0;
 
@@ -44,7 +59,7 @@ auto main() -> int
 
     std::cout << "An answer: " << appointment_config.configuration.configuration.front()->to_json().dump()  << "\n\n" << std::endl;
 
-    auto estimated_duration = compute_estimated_duration_of_config(appointment_config.configuration, "mongodb://localhost", "appointy_db");
+    auto estimated_duration = compute_estimated_duration_of_config(appointment_config.configuration, "mongodb://localhost", "appointy_db", "appointy_db");
 
     std::cout << "estimated duration: " << estimated_duration.to_json().dump() << std::endl;
 
